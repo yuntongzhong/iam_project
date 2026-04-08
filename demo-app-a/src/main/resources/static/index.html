@@ -48,12 +48,12 @@
             <div class="actions">
                 <a class="btn btn-light" href="http://127.0.0.1:8082/">跳转 Demo App B</a>
                 <a class="btn btn-outline" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
-                <a class="btn btn-outline" href="/logout">退出当前应用</a>
+                <a class="btn btn-outline" href="/logout">单点退出</a>
             </div>
         </div>
         <div class="toolbar">
             <div class="chip alt">授权模式: Authorization Code + PKCE</div>
-            <div class="chip alt">会话场景: 与 Demo App B 共享 IAM 登录态</div>
+            <div class="chip alt">会话场景: 与 Demo App B 共享 IAM 登录态，退出时回收全局会话</div>
         </div>
     </section>
     <div id="error" class="error"></div>

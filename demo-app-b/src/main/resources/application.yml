@@ -26,3 +26,7 @@ spring:
               - profile
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+app:
+  security:
+    iam-logout-uri: http://127.0.0.1:8080/logout

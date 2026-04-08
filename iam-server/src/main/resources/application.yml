@@ -32,3 +32,9 @@ logging:
 app:
   security:
     issuer: http://127.0.0.1:8080
+    allowed-post-logout-redirects:
+      - http://127.0.0.1:8081/signed-out.html
+      - http://127.0.0.1:8082/signed-out.html
+    front-channel-logout-uris:
+      - http://127.0.0.1:8081/slo/front-channel-logout
+      - http://127.0.0.1:8082/slo/front-channel-logout

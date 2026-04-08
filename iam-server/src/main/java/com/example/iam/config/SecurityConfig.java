@@ -1,21 +1,17 @@
 package com.example.iam.config;
 
-import com.example.iam.domain.User;
-import com.example.iam.domain.enums.UserStatus;
-import com.example.iam.repository.UserRepository;
 import com.example.iam.security.MfaAuthenticationSuccessHandler;
 import com.example.iam.security.MfaPendingRedirectFilter;
 import com.example.iam.service.CustomUserDetailsService;
-import com.example.iam.service.DepartmentRoleResolverService;
-import com.example.iam.service.JpaRegisteredClientRepositoryAdapter;
 import com.example.iam.service.UserClaimsService;
+import com.example.iam.web.SingleLogoutController;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -49,23 +45,23 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
 import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(AppSecurityProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final MfaAuthenticationSuccessHandler mfaAuthenticationSuccessHandler;
     private final MfaPendingRedirectFilter mfaPendingRedirectFilter;
-    private final JpaRegisteredClientRepositoryAdapter registeredClientRepository;
-    private final UserRepository userRepository;
-    private final DepartmentRoleResolverService departmentRoleResolverService;
     private final UserClaimsService userClaimsService;
+    private final AppSecurityProperties appSecurityProperties;
+    private final SingleLogoutController singleLogoutController;
 
     @Bean
     @Order(1)
@@ -89,12 +85,16 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/mfa/**", "/error").permitAll()
+                        .requestMatchers("/mfa/**", "/error", "/slo/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.successHandler(mfaAuthenticationSuccessHandler))
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
-                        .logoutSuccessUrl("/login?logout"))
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                response.sendRedirect("/slo/front-channel?post_logout_redirect_uri="
+                                        + URLEncoder.encode(
+                                        singleLogoutController.resolvePostLogoutRedirect(request.getParameter("post_logout_redirect_uri")),
+                                        StandardCharsets.UTF_8))))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/mfa/**"))
                 .addFilterBefore(mfaPendingRedirectFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -142,8 +142,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthorizationServerSettings authorizationServerSettings(@Value("${app.security.issuer}") String issuer) {
-        return AuthorizationServerSettings.builder().issuer(issuer).build();
+    public AuthorizationServerSettings authorizationServerSettings() {
+        return AuthorizationServerSettings.builder().issuer(appSecurityProperties.getIssuer()).build();
     }
 
     @Bean
