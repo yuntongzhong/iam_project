@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo App A</title>
+    <style>
+        :root { --bg: #f4f7fb; --ink: #0f172a; --muted: #475569; --panel: #fff; --primary: #0f766e; --primary-deep: #115e59; --accent: #1d4ed8; --line: #dbe4f0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: var(--ink); background: radial-gradient(circle at top left, rgba(15,118,110,.18), transparent 28%), radial-gradient(circle at top right, rgba(29,78,216,.16), transparent 24%), linear-gradient(180deg, #eff6ff 0%, var(--bg) 100%); }
+        .page { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+        .hero { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; border-radius: 28px; padding: 28px; box-shadow: 0 24px 60px rgba(15, 23, 42, .16); }
+        .hero-top, .toolbar, .grid { display: flex; gap: 16px; }
+        .hero-top { justify-content: space-between; align-items: flex-start; }
+        .hero p { margin: 8px 0 0; opacity: .85; }
+        .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 16px; border-radius: 999px; text-decoration: none; border: 1px solid transparent; font-weight: 600; transition: .2s ease; cursor: pointer; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-light { background: #fff; color: var(--ink); }
+        .btn-outline { border-color: rgba(255,255,255,.55); color: #fff; background: transparent; }
+        .toolbar { margin-top: 20px; flex-wrap: wrap; }
+        .panel { background: var(--panel); border: 1px solid rgba(219,228,240,.9); border-radius: 24px; padding: 24px; box-shadow: 0 18px 44px rgba(15, 23, 42, .06); }
+        .grid { margin-top: 20px; align-items: stretch; flex-wrap: wrap; }
+        .grid > .panel { flex: 1 1 340px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
+        .stat { border-radius: 20px; padding: 16px; background: #f8fafc; border: 1px solid var(--line); }
+        .label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+        .value { font-size: 18px; font-weight: 700; word-break: break-word; }
+        .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+        .chip { border-radius: 999px; padding: 8px 12px; background: #e2f8f5; color: var(--primary-deep); font-size: 13px; font-weight: 700; }
+        .chip.alt { background: #dbeafe; color: #1d4ed8; }
+        pre { margin: 0; padding: 18px; border-radius: 18px; background: #0f172a; color: #dbeafe; overflow: auto; font-size: 13px; line-height: 1.55; }
+        .muted { color: var(--muted); }
+        .error { margin-top: 16px; padding: 14px 16px; border-radius: 16px; border: 1px solid #fecaca; background: #fff1f2; color: #9f1239; display: none; }
+        .error.show { display: block; }
+        @media (max-width: 720px) { .hero-top { flex-direction: column; } .actions { width: 100%; } .actions .btn { flex: 1 1 100%; } }
+    </style>
+</head>
+<body>
+<div class="page">
+    <section class="hero">
+        <div class="hero-top">
+            <div>
+                <div style="opacity:.75; font-weight:700; letter-spacing:.08em;">SSO DEMO</div>
+                <h1 style="margin:10px 0 0; font-size:34px;">Demo App A</h1>
+                <p>用于演示 IAM 授权中心、PKCE、角色权限声明和同浏览器单点登录。</p>
+            </div>
+            <div class="actions">
+                <a class="btn btn-light" href="http://127.0.0.1:8082/">跳转 Demo App B</a>
+                <a class="btn btn-outline" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
+                <a class="btn btn-outline" href="/logout">退出当前应用</a>
+            </div>
+        </div>
+        <div class="toolbar">
+            <div class="chip alt">授权模式: Authorization Code + PKCE</div>
+            <div class="chip alt">会话场景: 与 Demo App B 共享 IAM 登录态</div>
+        </div>
+    </section>
+    <div id="error" class="error"></div>
+    <section class="grid">
+        <div class="panel">
+            <h2 style="margin-top:0;">当前登录会话</h2>
+            <div class="stats">
+                <div class="stat"><div class="label">用户名</div><div class="value" id="username">-</div></div>
+                <div class="stat"><div class="label">Subject</div><div class="value" id="subject">-</div></div>
+                <div class="stat"><div class="label">邮箱</div><div class="value" id="email">-</div></div>
+                <div class="stat"><div class="label">ID Token 过期</div><div class="value" id="expiresAt">-</div></div>
+            </div>
+            <h3 style="margin:22px 0 10px;">角色</h3>
+            <div class="chips" id="roles"></div>
+            <h3 style="margin:22px 0 10px;">权限</h3>
+            <div class="chips" id="permissions"></div>
+        </div>
+        <div class="panel">
+            <h2 style="margin-top:0;">授权信息摘要</h2>
+            <div class="stats">
+                <div class="stat"><div class="label">应用标识</div><div class="value" id="appName">-</div></div>
+                <div class="stat"><div class="label">Authority 数量</div><div class="value" id="authorityCount">-</div></div>
+                <div class="stat"><div class="label">签发时间</div><div class="value" id="issuedAt">-</div></div>
+                <div class="stat"><div class="label">Claims 数量</div><div class="value" id="claimCount">-</div></div>
+            </div>
+            <h3 style="margin:22px 0 10px;">Spring Authorities</h3>
+            <div class="chips" id="authorities"></div>
+        </div>
+    </section>
+    <section class="panel" style="margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">完整 Claims</h2>
+                <div class="muted">这里展示从 IAM 返回的 OIDC Claims，便于答辩时说明 SSO 后客户端拿到的身份上下文。</div>
+            </div>
+            <button class="btn btn-light" onclick="loadSession()">刷新数据</button>
+        </div>
+        <pre id="claimsBox" style="margin-top:18px;">加载中...</pre>
+    </section>
+</div>
+<script>
+function setText(id, value) { document.getElementById(id).textContent = value || '-'; }
+function renderChips(id, values, alt) {
+    const container = document.getElementById(id);
+    container.innerHTML = '';
+    const list = Array.isArray(values) && values.length ? values : ['-'];
+    list.forEach(value => {
+        const span = document.createElement('span');
+        span.className = 'chip' + (alt ? ' alt' : '');
+        span.textContent = value;
+        container.appendChild(span);
+    });
+}
+function formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN') : '-'; }
+async function loadSession() {
+    const errorBox = document.getElementById('error');
+    errorBox.classList.remove('show');
+    try {
+        const response = await fetch('/api/session');
+        if (!response.ok) throw new Error(await response.text());
+        const session = await response.json();
+        setText('appName', session.title);
+        setText('username', session.username);
+        setText('subject', session.subject);
+        setText('email', session.email);
+        setText('issuedAt', formatTime(session.issuedAt));
+        setText('expiresAt', formatTime(session.expiresAt));
+        setText('authorityCount', Array.isArray(session.authorities) ? session.authorities.length : 0);
+        setText('claimCount', session.claims ? Object.keys(session.claims).length : 0);
+        renderChips('roles', session.roles, false);
+        renderChips('permissions', session.permissions, true);
+        renderChips('authorities', session.authorities, true);
+        document.getElementById('claimsBox').textContent = JSON.stringify(session.claims, null, 2);
+    } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.classList.add('show');
+        document.getElementById('claimsBox').textContent = '加载失败';
+    }
+}
+loadSession();
+</script>
+</body>
+</html>

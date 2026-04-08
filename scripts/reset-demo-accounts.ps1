@@ -36,7 +36,11 @@ SET password = '$2a$10$8Q9FEE0rhQ4COUa/DKVGheZ18bfjxnZom99yoHTjjDfm.fzRKTlxe',
     totp_secret = NULL
 WHERE username = 'bob';
 
-SELECT username, status, failed_login_attempts, is_totp_enabled
+SELECT username,
+       status,
+       failed_login_attempts,
+       is_totp_enabled + 0 AS totp_enabled,
+       IF(totp_secret IS NULL, 0, 1) AS has_secret
 FROM users
 WHERE username IN ('admin', 'alice', 'bob')
 ORDER BY username;
@@ -49,3 +53,4 @@ Write-Host "Demo accounts restored:"
 Write-Host "- admin / Admin#2026!Secure"
 Write-Host "- alice / Alice#2026!Secure"
 Write-Host "- bob / Bob#2026!Audit"
+Write-Host "- TOTP state: disabled and secret cleared"

@@ -8,6 +8,7 @@ import com.example.iam.security.MfaPendingRedirectFilter;
 import com.example.iam.service.CustomUserDetailsService;
 import com.example.iam.service.DepartmentRoleResolverService;
 import com.example.iam.service.JpaRegisteredClientRepositoryAdapter;
+import com.example.iam.service.UserClaimsService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -41,6 +42,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import java.security.KeyPair;
@@ -63,6 +65,7 @@ public class SecurityConfig {
     private final JpaRegisteredClientRepositoryAdapter registeredClientRepository;
     private final UserRepository userRepository;
     private final DepartmentRoleResolverService departmentRoleResolverService;
+    private final UserClaimsService userClaimsService;
 
     @Bean
     @Order(1)
@@ -89,7 +92,9 @@ public class SecurityConfig {
                         .requestMatchers("/mfa/**", "/error").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form.successHandler(mfaAuthenticationSuccessHandler))
-                .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                        .logoutSuccessUrl("/login?logout"))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/mfa/**"))
                 .addFilterBefore(mfaPendingRedirectFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -148,26 +153,9 @@ public class SecurityConfig {
             if (principal == null || principal.getName() == null) {
                 return;
             }
-            Set<String> roles = new LinkedHashSet<>();
-            Set<String> permissions = new LinkedHashSet<>();
-            User user = userRepository.findByUsername(principal.getName()).orElse(null);
-            if (user == null || user.getStatus() != UserStatus.ACTIVE) {
-                return;
-            }
-
-            user.getRoles().forEach(role -> {
-                roles.add(role.getCode());
-                role.getPermissions().forEach(permission -> permissions.add(permission.getCode()));
-            });
-            if (user.getDepartment() != null) {
-                departmentRoleResolverService.resolveInheritedRoles(user.getDepartment()).forEach(role -> {
-                    roles.add(role.getCode());
-                    role.getPermissions().forEach(permission -> permissions.add(permission.getCode()));
-                });
-            }
-
-            context.getClaims().claim("roles", roles);
-            context.getClaims().claim("permissions", permissions);
+            UserClaimsService.UserClaimSnapshot snapshot = userClaimsService.buildSnapshot(principal.getName());
+            context.getClaims().claim("roles", snapshot.roles());
+            context.getClaims().claim("permissions", snapshot.permissions());
         };
     }
 

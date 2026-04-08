@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 public class SecurityConfig {
@@ -20,10 +21,14 @@ public class SecurityConfig {
         ((DefaultOAuth2AuthorizationRequestResolver) resolver)
                 .setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
 
-        http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+        http.authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/signed-out.html").permitAll()
+                        .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestResolver(resolver)))
                 .oauth2Client(Customizer.withDefaults())
-                .logout(logout -> logout.logoutSuccessUrl("/"));
+                .logout(logout -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+                        .logoutSuccessUrl("/signed-out.html"));
 
         return http.build();
     }

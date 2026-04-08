@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-
 @RestController
 @RequestMapping("/mfa")
 @RequiredArgsConstructor
@@ -68,9 +68,9 @@ public class MfaController {
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({code})
                             });
-                            if (resp.redirected) { window.location = resp.url; return; }
-                            const data = await resp.text();
-                            alert(data);
+                            const data = await resp.json().catch(() => ({}));
+                            if (data.redirectUrl) { window.location = data.redirectUrl; return; }
+                            alert(data.message || '动态码校验失败，请重试');
                         }
                     </script>
                 </body>
@@ -83,12 +83,12 @@ public class MfaController {
         HttpSession session = servletRequest.getSession(false);
         User user = pendingUser(session);
         if (!totpService.verifyCode(user.getTotpSecret(), request.code())) {
-            servletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "动态码错误");
+            writeBadRequest(servletResponse, "动态码错误，请确认使用当前二维码重新绑定，或检查手机时间是否已自动同步。");
             return;
         }
         user.setTotpEnabled(true);
         userRepository.save(user);
-        finalizeAuthentication(session, servletRequest, servletResponse);
+        writeSuccessRedirect(session, servletRequest, servletResponse);
     }
 
     @GetMapping(value = "/verify", produces = MediaType.TEXT_HTML_VALUE)
@@ -126,9 +126,9 @@ public class MfaController {
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({code})
                             });
-                            if (resp.redirected) { window.location = resp.url; return; }
-                            const data = await resp.text();
-                            alert(data);
+                            const data = await resp.json().catch(() => ({}));
+                            if (data.redirectUrl) { window.location = data.redirectUrl; return; }
+                            alert(data.message || '动态码校验失败，请重试');
                         }
                     </script>
                 </body>
@@ -141,10 +141,17 @@ public class MfaController {
         HttpSession session = servletRequest.getSession(false);
         User user = pendingUser(session);
         if (!totpService.verifyCode(user.getTotpSecret(), request.code())) {
-            servletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST, "动态码错误");
+            writeBadRequest(servletResponse, "动态码错误。若你最近执行过演示账号重置，请先重新扫码绑定 Google Authenticator。");
             return;
         }
-        finalizeAuthentication(session, servletRequest, servletResponse);
+        writeSuccessRedirect(session, servletRequest, servletResponse);
+    }
+
+    private void writeBadRequest(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"message\":\"" + escapeJson(message) + "\"}");
     }
 
     private User pendingUser(HttpSession session) {
@@ -159,7 +166,7 @@ public class MfaController {
                 .orElseThrow(() -> new IllegalStateException("Pending user not found"));
     }
 
-    private void finalizeAuthentication(HttpSession session, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void writeSuccessRedirect(HttpSession session, HttpServletRequest request, HttpServletResponse response) throws IOException {
         Authentication authentication = (Authentication) session.getAttribute(MfaSessionKeys.PENDING_AUTHENTICATION);
         var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
@@ -168,6 +175,13 @@ public class MfaController {
         session.removeAttribute(MfaSessionKeys.PENDING_AUTHENTICATION);
         session.removeAttribute(MfaSessionKeys.POST_MFA_REDIRECT_URL);
         session.removeAttribute(MfaSessionKeys.MFA_MODE);
-        response.sendRedirect(redirectValue == null ? "/admin.html" : redirectValue.toString());
+        response.setStatus(HttpStatus.OK.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"redirectUrl\":\"" + escapeJson(redirectValue == null ? "/admin.html" : redirectValue.toString()) + "\"}");
+    }
+
+    private String escapeJson(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

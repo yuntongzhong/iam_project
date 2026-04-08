@@ -1,5 +1,9 @@
 server:
   port: 8082
+  servlet:
+    session:
+      cookie:
+        name: DEMO_APP_B_SESSION
 
 spring:
   security:
