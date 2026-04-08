@@ -1,0 +1,3 @@
+rootProject.name = 'iam-platform'
+
+include 'iam-server', 'demo-app-a', 'demo-app-b'

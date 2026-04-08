@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAM 管理控制台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <style>
+        body { background: linear-gradient(135deg, #f8fafc, #ecfeff); }
+        .card { border: 0; border-radius: 20px; box-shadow: 0 18px 48px rgba(15,23,42,.08); }
+        .chip { border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+        .ACTIVE { background: #dcfce7; color: #166534; }
+        .LOCKED { background: #fee2e2; color: #991b1b; }
+        .DISABLED { background: #e2e8f0; color: #334155; }
+        .section-title { display: flex; justify-content: space-between; align-items: center; }
+        .small-table td { font-size: 13px; }
+    </style>
+</head>
+<body>
+<div id="app" class="container py-4">
+    <div class="card p-4 mb-4 text-white" style="background: linear-gradient(135deg, #0f766e, #1d4ed8);">
+        <div class="section-title">
+            <div>
+                <h1 class="h3 mb-1">IAM 管理控制台</h1>
+                <div class="opacity-75">用户、部门、角色、应用客户端、审计日志</div>
+            </div>
+            <button class="btn btn-light" @click="loadAll">刷新全部</button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-7">
+            <div class="card p-4">
+                <div class="section-title mb-3">
+                    <h2 class="h5 mb-0">用户</h2>
+                    <button class="btn btn-outline-secondary btn-sm" @click="resetUserForm">清空表单</button>
+                </div>
+                <form class="row g-3 mb-3" @submit.prevent="saveUser">
+                    <div class="col-md-6"><input class="form-control" v-model="forms.user.username" placeholder="用户名" required></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.user.email" placeholder="邮箱" required></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.user.phone" placeholder="手机号" required></div>
+                    <div class="col-md-6"><input class="form-control" type="password" v-model="forms.user.password" placeholder="密码，新建必填"></div>
+                    <div class="col-md-6">
+                        <select class="form-select" v-model="forms.user.status">
+                            <option>ACTIVE</option>
+                            <option>DISABLED</option>
+                            <option>LOCKED</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select" v-model.number="forms.user.departmentId">
+                            <option :value="null">无部门</option>
+                            <option v-for="item in flatDepartments" :value="item.id">{{ item.name }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <select class="form-select" multiple v-model="forms.user.roleIds">
+                            <option v-for="role in roles" :value="role.id">{{ role.code }} / {{ role.name }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-dark">{{ forms.user.id ? '更新用户' : '创建用户' }}</button>
+                    </div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table table-hover small-table">
+                        <thead><tr><th>用户</th><th>部门</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr v-for="user in users" :key="user.id">
+                            <td>{{ user.username }}<div class="text-secondary">{{ user.email }}</div></td>
+                            <td>{{ user.departmentName || '-' }}</td>
+                            <td>{{ user.roleCodes.join(', ') || '-' }}</td>
+                            <td><span class="chip" :class="user.status">{{ user.status }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)">编辑</button>
+                                <button class="btn btn-sm btn-outline-warning me-1" @click="changeUserStatus(user)">状态</button>
+                                <button class="btn btn-sm btn-outline-success me-1" @click="resetPassword(user)">密码</button>
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user.id)">删除</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="card p-4 mb-4">
+                <h2 class="h5">部门</h2>
+                <form class="row g-3 mb-3" @submit.prevent="saveDepartment">
+                    <div class="col-md-6"><input class="form-control" v-model="forms.department.name" placeholder="部门名称" required></div>
+                    <div class="col-md-6">
+                        <select class="form-select" v-model.number="forms.department.parentId">
+                            <option :value="null">顶级部门</option>
+                            <option v-for="item in flatDepartments" :value="item.id">{{ item.name }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <select class="form-select" multiple v-model="forms.department.roleIds">
+                            <option v-for="role in roles" :value="role.id">{{ role.code }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><button class="btn btn-dark">{{ forms.department.id ? '更新部门' : '创建部门' }}</button></div>
+                </form>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="department in flatDepartments" :key="department.id">
+                        <span>{{ department.name }}</span>
+                        <span>
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editDepartment(department)">编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" @click="deleteDepartment(department.id)">删除</button>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card p-4">
+                <h2 class="h5">角色</h2>
+                <form class="row g-3 mb-3" @submit.prevent="saveRole">
+                    <div class="col-md-6"><input class="form-control" v-model="forms.role.code" placeholder="角色编码" required></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.role.name" placeholder="角色名称" required></div>
+                    <div class="col-12"><input class="form-control" v-model="forms.role.description" placeholder="角色描述"></div>
+                    <div class="col-12">
+                        <select class="form-select" multiple v-model="forms.role.permissionIds">
+                            <option v-for="permission in permissions" :value="permission.id">{{ permission.code }}</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><button class="btn btn-dark">{{ forms.role.id ? '更新角色' : '创建角色' }}</button></div>
+                </form>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="role in roles" :key="role.id">
+                        <span>{{ role.code }} / {{ role.name }}</span>
+                        <span>
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(role)">编辑</button>
+                            <button class="btn btn-sm btn-outline-danger" @click="deleteRole(role.id)">删除</button>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-12 col-xl-6">
+            <div class="card p-4">
+                <h2 class="h5">应用客户端</h2>
+                <form class="row g-3 mb-3" @submit.prevent="saveApp">
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientId" placeholder="clientId" required></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientName" placeholder="应用名" required></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientSecret" placeholder="clientSecret"></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.redirectUrisText" placeholder="redirectUris 逗号分隔"></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.postLogoutRedirectUrisText" placeholder="postLogoutRedirectUris"></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.scopesText" placeholder="scopes"></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.grantTypesText" placeholder="grantTypes"></div>
+                    <div class="col-md-6"><input class="form-control" v-model="forms.app.authenticationMethodsText" placeholder="auth methods"></div>
+                    <div class="col-12 form-check"><input class="form-check-input" type="checkbox" v-model="forms.app.requireProofKey" id="pkce"><label class="form-check-label" for="pkce">强制 PKCE</label></div>
+                    <div class="col-12"><button class="btn btn-dark">{{ forms.app.id ? '更新应用' : '创建应用' }}</button></div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table table-hover small-table">
+                        <thead><tr><th>应用</th><th>配置</th><th>操作</th></tr></thead>
+                        <tbody>
+                        <tr v-for="app in apps" :key="app.id">
+                            <td>{{ app.clientId }} / {{ app.clientName }}</td>
+                            <td>{{ app.redirectUris.join(', ') }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1" @click="editApp(app)">编辑</button>
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteApp(app.id)">删除</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <div class="card p-4">
+                <div class="section-title mb-3">
+                    <h2 class="h5 mb-0">审计日志</h2>
+                    <button class="btn btn-outline-secondary btn-sm" @click="loadLogs">刷新日志</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover small-table">
+                        <thead><tr><th>时间</th><th>用户</th><th>动作</th><th>状态</th><th>详情</th></tr></thead>
+                        <tbody>
+                        <tr v-for="log in logs" :key="log.id">
+                            <td>{{ formatTime(log.timestamp) }}</td>
+                            <td>{{ log.username }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.status }}</td>
+                            <td>{{ log.details }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            users: [], departments: [], roles: [], permissions: [], apps: [], logs: [],
+            forms: {
+                user: { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] },
+                department: { id: null, name: '', parentId: null, roleIds: [] },
+                role: { id: null, code: '', name: '', description: '', permissionIds: [] },
+                app: { id: null, clientId: '', clientName: '', clientSecret: '', redirectUrisText: '', postLogoutRedirectUrisText: '', scopesText: 'openid,profile', grantTypesText: 'authorization_code,refresh_token', authenticationMethodsText: 'client_secret_basic', requireProofKey: true }
+            }
+        };
+    },
+    computed: {
+        flatDepartments() {
+            const result = [];
+            const walk = (items) => (items || []).forEach(item => { result.push(item); walk(item.children); });
+            walk(this.departments);
+            return result;
+        }
+    },
+    methods: {
+        async api(path, options = {}) {
+            const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+            if (!response.ok) throw new Error(await response.text());
+            if (response.status === 204) return null;
+            return response.headers.get('content-type')?.includes('json') ? response.json() : response.text();
+        },
+        parseList(text) { return (text || '').split(',').map(v => v.trim()).filter(Boolean); },
+        async loadAll() { await Promise.all([this.loadUsers(), this.loadDepartments(), this.loadRoles(), this.loadPermissions(), this.loadApps(), this.loadLogs()]); },
+        async loadUsers() { this.users = await this.api('/api/users'); },
+        async loadDepartments() { this.departments = await this.api('/api/departments'); },
+        async loadRoles() { this.roles = await this.api('/api/roles'); },
+        async loadPermissions() { this.permissions = await this.api('/api/permissions'); },
+        async loadApps() { this.apps = await this.api('/api/apps'); },
+        async loadLogs() { this.logs = await this.api('/api/audit-logs'); },
+        resetUserForm() { this.forms.user = { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] }; },
+        editUser(user) { this.forms.user = { ...user, phone: user.phone.replace('****', '0000'), password: '', roleIds: this.roles.filter(r => user.roleCodes.includes(r.code)).map(r => r.id) }; },
+        async saveUser() { const m = this.forms.user.id ? 'PUT' : 'POST'; const p = this.forms.user.id ? `/api/users/${this.forms.user.id}` : '/api/users'; await this.api(p, { method: m, body: JSON.stringify(this.forms.user) }); this.resetUserForm(); await this.loadUsers(); await this.loadLogs(); },
+        async deleteUser(id) { if (confirm('确认删除用户？')) { await this.api(`/api/users/${id}`, { method: 'DELETE' }); await this.loadUsers(); await this.loadLogs(); } },
+        async changeUserStatus(user) { const status = prompt('输入状态 ACTIVE / DISABLED / LOCKED', user.status); if (status) { await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' }); await this.loadUsers(); await this.loadLogs(); } },
+        async resetPassword(user) { const newPassword = prompt(`给 ${user.username} 设置新密码`, 'Reset#2026!Temp'); if (newPassword) { await this.api(`/api/users/${user.id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) }); await this.loadLogs(); } },
+        editDepartment(item) { this.forms.department = { id: item.id, name: item.name, parentId: item.parentId, roleIds: this.roles.filter(r => item.roleCodes.includes(r.code)).map(r => r.id) }; },
+        async saveDepartment() { const m = this.forms.department.id ? 'PUT' : 'POST'; const p = this.forms.department.id ? `/api/departments/${this.forms.department.id}` : '/api/departments'; await this.api(p, { method: m, body: JSON.stringify(this.forms.department) }); this.forms.department = { id: null, name: '', parentId: null, roleIds: [] }; await this.loadDepartments(); await this.loadLogs(); },
+        async deleteDepartment(id) { if (confirm('确认删除部门？')) { await this.api(`/api/departments/${id}`, { method: 'DELETE' }); await this.loadDepartments(); await this.loadLogs(); } },
+        editRole(role) { this.forms.role = { id: role.id, code: role.code, name: role.name, description: role.description, permissionIds: role.permissions.map(p => p.id) }; },
+        async saveRole() { const m = this.forms.role.id ? 'PUT' : 'POST'; const p = this.forms.role.id ? `/api/roles/${this.forms.role.id}` : '/api/roles'; await this.api(p, { method: m, body: JSON.stringify(this.forms.role) }); this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] }; await this.loadRoles(); await this.loadLogs(); },
+        async deleteRole(id) { if (confirm('确认删除角色？')) { await this.api(`/api/roles/${id}`, { method: 'DELETE' }); await this.loadRoles(); await this.loadLogs(); } },
+        editApp(app) { this.forms.app = { id: app.id, clientId: app.clientId, clientName: app.clientName, clientSecret: '', redirectUrisText: app.redirectUris.join(','), postLogoutRedirectUrisText: app.postLogoutRedirectUris.join(','), scopesText: app.scopes.join(','), grantTypesText: app.grantTypes.join(','), authenticationMethodsText: app.authenticationMethods.join(','), requireProofKey: app.requireProofKey }; },
+        async saveApp() { const payload = { clientId: this.forms.app.clientId, clientName: this.forms.app.clientName, clientSecret: this.forms.app.clientSecret, redirectUris: this.parseList(this.forms.app.redirectUrisText), postLogoutRedirectUris: this.parseList(this.forms.app.postLogoutRedirectUrisText), scopes: this.parseList(this.forms.app.scopesText), grantTypes: this.parseList(this.forms.app.grantTypesText), authenticationMethods: this.parseList(this.forms.app.authenticationMethodsText), requireProofKey: this.forms.app.requireProofKey, requireAuthorizationConsent: false, active: true }; const m = this.forms.app.id ? 'PUT' : 'POST'; const p = this.forms.app.id ? `/api/apps/${this.forms.app.id}` : '/api/apps'; await this.api(p, { method: m, body: JSON.stringify(payload) }); this.forms.app = { id: null, clientId: '', clientName: '', clientSecret: '', redirectUrisText: '', postLogoutRedirectUrisText: '', scopesText: 'openid,profile', grantTypesText: 'authorization_code,refresh_token', authenticationMethodsText: 'client_secret_basic', requireProofKey: true }; await this.loadApps(); await this.loadLogs(); },
+        async deleteApp(id) { if (confirm('确认删除应用？')) { await this.api(`/api/apps/${id}`, { method: 'DELETE' }); await this.loadApps(); await this.loadLogs(); } },
+        formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN') : '-'; }
+    },
+    async mounted() { try { await this.loadAll(); } catch (error) { alert(error.message); } }
+}).mount('#app');
+</script>
+</body>
+</html>
