@@ -3,260 +3,1649 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IAM 管理控制台</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>IAM 治理控制台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <style>
-        body { background: linear-gradient(135deg, #f8fafc, #ecfeff); }
-        .card { border: 0; border-radius: 20px; box-shadow: 0 18px 48px rgba(15,23,42,.08); }
-        .chip { border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
-        .ACTIVE { background: #dcfce7; color: #166534; }
-        .LOCKED { background: #fee2e2; color: #991b1b; }
-        .DISABLED { background: #e2e8f0; color: #334155; }
-        .section-title { display: flex; justify-content: space-between; align-items: center; }
-        .small-table td { font-size: 13px; }
+        :root {
+            --bg: oklch(0.985 0.004 240);
+            --bg-strong: oklch(0.952 0.01 235);
+            --surface: oklch(0.998 0.002 240 / 0.94);
+            --surface-strong: oklch(0.972 0.008 232);
+            --line: oklch(0.89 0.014 234);
+            --line-strong: oklch(0.72 0.04 245);
+            --ink: oklch(0.2 0.03 255);
+            --ink-soft: oklch(0.45 0.02 245);
+            --teal: oklch(0.5 0.11 240);
+            --teal-deep: oklch(0.3 0.07 246);
+            --clay: oklch(0.72 0.11 85);
+            --olive: oklch(0.62 0.074 132);
+            --danger: oklch(0.58 0.17 28);
+            --disabled: oklch(0.58 0.02 260);
+            --shadow: 0 30px 90px rgba(15, 23, 42, 0.08);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 24px;
+            --space-2xl: 32px;
+            --space-3xl: 48px;
+            --radius-sm: 14px;
+            --radius-md: 22px;
+            --radius-lg: 30px;
+            --radius-xl: 38px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            color-scheme: light;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, oklch(0.93 0.04 235 / 0.7), transparent 28%),
+                radial-gradient(circle at 92% 8%, oklch(0.95 0.06 84 / 0.34), transparent 20%),
+                linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.055) calc(100% - 1px)),
+                linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.05) calc(100% - 1px));
+            background-size: 88px 88px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 76%);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        .app-shell {
+            max-width: 1560px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        .hero,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            animation: rise 0.7s ease-out both;
+        }
+
+        .hero {
+            display: grid;
+            gap: var(--space-xl);
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+            padding: clamp(24px, 3vw, 40px);
+            border-radius: var(--radius-xl);
+            background:
+                linear-gradient(135deg, oklch(0.26 0.05 250), oklch(0.34 0.07 238) 58%, oklch(0.4 0.08 220) 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+            color: oklch(0.975 0.007 95);
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -8% -30% auto;
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 62%);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: var(--space-lg);
+            align-content: start;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            width: fit-content;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            font-family: "Lexend", sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin: 0;
+            max-width: 12ch;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(2.2rem, 3.4vw, 4.35rem);
+            line-height: 1.06;
+            letter-spacing: 0.01em;
+        }
+
+        .hero-lead {
+            max-width: 62ch;
+            margin: 0;
+            color: rgba(242, 246, 255, 0.82);
+            font-size: 1rem;
+            line-height: 1.85;
+        }
+
+        .hero-actions,
+        .signal-list,
+        .metric-grid,
+        .glossary-grid,
+        .form-grid,
+        .section-grid,
+        .chip-list,
+        .record-actions,
+        .record-meta,
+        .record-stack,
+        .action-row,
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .hero-actions {
+            margin-top: var(--space-sm);
+        }
+
+        .hero-side {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: var(--space-lg);
+            align-content: space-between;
+            padding: 22px;
+            border-radius: calc(var(--radius-lg) - 6px);
+            background: rgba(248, 251, 255, 0.09);
+            border: 1px solid rgba(248, 251, 255, 0.16);
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-side-title {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.2rem;
+        }
+
+        .signal {
+            display: grid;
+            gap: 6px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 250, 243, 0.14);
+        }
+
+        .signal:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .signal-label {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .signal strong {
+            font-size: 1.08rem;
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:focus-visible,
+        .input:focus-visible,
+        .select:focus-visible {
+            outline: 2px solid color-mix(in oklch, var(--teal) 70%, white);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: oklch(0.95 0.03 85);
+            color: oklch(0.23 0.03 252);
+            font-weight: 700;
+        }
+
+        .btn-ghost {
+            border-color: rgba(245, 249, 255, 0.24);
+            background: rgba(245, 249, 255, 0.05);
+            color: oklch(0.972 0.008 95);
+        }
+
+        .btn-ink {
+            background: var(--ink);
+            color: oklch(0.982 0.004 95);
+            font-weight: 700;
+        }
+
+        .btn-soft {
+            background: color-mix(in oklch, var(--surface-strong) 84%, white);
+            color: var(--ink);
+            border-color: color-mix(in oklch, var(--line) 88%, white);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border-color: color-mix(in oklch, var(--danger) 28%, white);
+        }
+
+        .overview {
+            margin-top: 28px;
+            display: grid;
+            gap: var(--space-xl);
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+        }
+
+        .panel {
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+            backdrop-filter: blur(18px);
+        }
+
+        .panel::after {
+            content: "";
+            position: absolute;
+            inset: auto 24px 0 auto;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .panel-header {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-lg);
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.35rem;
+        }
+
+        .panel-desc {
+            margin: 6px 0 0;
+            max-width: 60ch;
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .metric-card {
+            position: relative;
+            padding: 18px;
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(244, 247, 255, 0.92)),
+                color-mix(in oklch, var(--surface-strong) 94%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            min-height: 138px;
+        }
+
+        .metric-label {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .metric-value {
+            margin-top: 18px;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(1.7rem, 2.4vw, 2.8rem);
+            line-height: 1;
+        }
+
+        .metric-note {
+            margin-top: 12px;
+            color: color-mix(in oklch, var(--ink-soft) 82%, white);
+            font-size: 13px;
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .glossary-item {
+            padding: 18px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 90%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+        }
+
+        .glossary-item strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.98rem;
+        }
+
+        .glossary-item p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        .workspace {
+            margin-top: 28px;
+            display: grid;
+            gap: var(--space-xl);
+            grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+            align-items: start;
+        }
+
+        .stack {
+            display: grid;
+            gap: var(--space-xl);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: var(--space-md);
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field span {
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .span-12 { grid-column: span 12; }
+        .span-8 { grid-column: span 8; }
+        .span-6 { grid-column: span 6; }
+        .span-4 { grid-column: span 4; }
+
+        .input,
+        .select {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(71, 85, 105, 0.18);
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--ink);
+        }
+
+        .select[multiple] {
+            min-height: 132px;
+            padding-block: 10px;
+        }
+
+        .helper {
+            color: var(--ink-soft);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .callout {
+            padding: 18px;
+            border-radius: 20px;
+            background: color-mix(in oklch, var(--surface-strong) 82%, white);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            color: var(--ink-soft);
+            line-height: 1.72;
+        }
+
+        .callout strong {
+            color: var(--ink);
+        }
+
+        .toolbar {
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .status-pill,
+        .mini-tag,
+        .code-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .status-pill.ACTIVE {
+            background: color-mix(in oklch, var(--olive) 18%, white);
+            color: oklch(0.38 0.09 140);
+        }
+
+        .status-pill.LOCKED {
+            background: color-mix(in oklch, var(--danger) 14%, white);
+            color: oklch(0.44 0.15 28);
+        }
+
+        .status-pill.DISABLED {
+            background: color-mix(in oklch, var(--disabled) 10%, white);
+            color: oklch(0.44 0.025 260);
+        }
+
+        .mini-tag {
+            background: color-mix(in oklch, var(--surface-strong) 86%, white);
+            color: var(--ink-soft);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+        }
+
+        .code-tag {
+            background: color-mix(in oklch, var(--teal) 14%, white);
+            color: var(--teal-deep);
+        }
+
+        .records {
+            display: grid;
+            gap: var(--space-md);
+        }
+
+        .record {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 24px;
+            background: rgba(255, 253, 248, 0.92);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+        }
+
+        .record-main {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            align-items: flex-start;
+        }
+
+        .record-title {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .record-subtitle,
+        .record-meta span {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.65;
+        }
+
+        .record-stack {
+            align-items: flex-start;
+        }
+
+        .chip-list {
+            align-items: flex-start;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 12%, white);
+            color: var(--teal-deep);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .chip.alt {
+            background: color-mix(in oklch, var(--clay) 18%, white);
+            color: oklch(0.48 0.07 82);
+        }
+
+        .chip.muted {
+            background: color-mix(in oklch, var(--disabled) 8%, white);
+            color: oklch(0.44 0.02 250);
+        }
+
+        .data-wrap {
+            overflow: auto;
+            border-radius: 24px;
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        .scroll-region {
+            max-height: 640px;
+            overflow: auto;
+            padding-right: 6px;
+        }
+
+        .scroll-region.tall {
+            max-height: 760px;
+        }
+
+        .scroll-region.compact {
+            max-height: 560px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 16px 18px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.08);
+            font-size: 14px;
+        }
+
+        .data-table th {
+            position: sticky;
+            top: 0;
+            background: color-mix(in oklch, var(--surface-strong) 96%, white);
+            z-index: 1;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .data-table .primary-cell {
+            display: grid;
+            gap: 6px;
+        }
+
+        .table-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(110px, max-content));
+            gap: 8px;
+            justify-content: start;
+            min-width: 236px;
+        }
+
+        .table-actions .btn {
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 18px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 84%, white);
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .section-grid {
+            display: grid;
+            gap: var(--space-md);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .legend-card {
+            padding: 16px;
+            border-radius: 20px;
+            background: color-mix(in oklch, var(--surface-strong) 86%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+        }
+
+        .legend-card h4 {
+            margin: 0 0 8px;
+            font-size: 0.96rem;
+        }
+
+        .legend-card p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .mono {
+            font-family: "Lexend", sans-serif;
+            letter-spacing: 0.03em;
+        }
+
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(126, 94, 56, 0.1);
+        }
+
+        .pagination-status {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .pagination-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .page-size {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+
+        .page-select {
+            min-height: 34px;
+            width: 78px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 252, 247, 0.92);
+        }
+
+        .page-btn {
+            min-width: 42px;
+            min-height: 40px;
+            padding: 0 14px;
+        }
+
+        .page-btn.active {
+            background: var(--ink);
+            color: oklch(0.982 0.004 95);
+            border-color: var(--ink);
+        }
+
+        .page-btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-dots {
+            color: var(--ink-soft);
+            padding: 0 4px;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1180px) {
+            .hero,
+            .overview,
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .app-shell {
+                padding-inline: 14px;
+            }
+
+            .panel,
+            .hero {
+                padding: 20px;
+                border-radius: 24px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .span-12,
+            .span-8,
+            .span-6,
+            .span-4 {
+                grid-column: auto;
+            }
+
+            .record-main,
+            .panel-header,
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
 </head>
 <body>
-<div id="app" class="container py-4">
-    <div class="card p-4 mb-4 text-white" style="background: linear-gradient(135deg, #0f766e, #1d4ed8);">
-        <div class="section-title">
-            <div>
-                <h1 class="h3 mb-1">IAM 管理控制台</h1>
-                <div class="opacity-75">用户、部门、角色、应用客户端、审计日志</div>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-light" @click="loadAll">刷新全部</button>
-                <a class="btn btn-outline-light" href="/logout">退出登录</a>
+<div id="app" class="app-shell">
+    <section class="hero">
+        <div class="hero-copy">
+            <div class="eyebrow">Identity Governance Console</div>
+            <h1>把用户、角色、权限与 SSO 关系讲清楚</h1>
+            <p class="hero-lead">
+                这是一个用于课程答辩与后台演示的 IAM 治理台。它把用户目录、部门继承、RBAC 授权、OAuth2 客户端和审计轨迹放在一套叙事结构里，既能现场操作，也能直观看出系统设计的边界与能力。
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" @click="loadAll">刷新全局数据</button>
+                <a class="btn btn-ghost" href="http://127.0.0.1:8081/">打开 Demo App A</a>
+                <a class="btn btn-ghost" href="http://127.0.0.1:8082/">打开 Demo App B</a>
+                <a class="btn btn-ghost" href="/logout">退出登录</a>
             </div>
         </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-12 col-xl-7">
-            <div class="card p-4">
-                <div class="section-title mb-3">
-                    <h2 class="h5 mb-0">用户</h2>
-                    <button class="btn btn-outline-secondary btn-sm" @click="resetUserForm">清空表单</button>
+        <aside class="hero-side">
+            <div>
+                <h2 class="hero-side-title">治理看板信号</h2>
+                <div class="signal-list">
+                    <div class="signal">
+                        <span class="signal-label">认证链路</span>
+                        <strong>OAuth2 / OIDC + PKCE + MFA</strong>
+                    </div>
+                    <div class="signal">
+                        <span class="signal-label">授权模型</span>
+                        <strong>用户 -> 角色 -> 权限，部门可继承角色</strong>
+                    </div>
+                    <div class="signal">
+                        <span class="signal-label">运行期检查</span>
+                        <strong>Spring Authorities 映射为 `ROLE_*` 与 `PERM_*`</strong>
+                    </div>
                 </div>
-                <form class="row g-3 mb-3" @submit.prevent="saveUser">
-                    <div class="col-md-6"><input class="form-control" v-model="forms.user.username" placeholder="用户名" required></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.user.email" placeholder="邮箱" required></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.user.phone" placeholder="手机号" required></div>
-                    <div class="col-md-6"><input class="form-control" type="password" v-model="forms.user.password" placeholder="密码，新建必填"></div>
-                    <div class="col-md-6">
-                        <select class="form-select" v-model="forms.user.status">
+            </div>
+            <div class="helper">
+                首屏优先回答三个问题：谁能进系统、能做什么、这份能力在 Spring Security 里最终以什么授权串参与判断。
+            </div>
+        </aside>
+    </section>
+
+    <section class="overview">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">治理总览</h2>
+                    <p class="panel-desc">用投屏友好的方式展示当前环境的数据规模与治理边界，答辩时可直接作为讲解起点。</p>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card" v-for="metric in metrics" :key="metric.label">
+                    <div class="metric-label">{{ metric.label }}</div>
+                    <div class="metric-value">{{ metric.value }}</div>
+                    <div class="metric-note">{{ metric.note }}</div>
+                </div>
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">概念词典</h2>
+                    <p class="panel-desc">把答辩里最容易混淆的术语放在一起，让角色、权限与 Spring Authority 的关系在界面里直接自解释。</p>
+                </div>
+            </div>
+            <div class="glossary-grid">
+                <div class="glossary-item" v-for="item in glossary" :key="item.title">
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.description }}</p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="workspace">
+        <div class="stack">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">用户目录与生效权限</h2>
+                        <p class="panel-desc">用户可直接绑定角色，也会从所在部门及祖先部门继承角色，因此列表里展示的是“最终生效”的角色与权限结果。</p>
+                    </div>
+                    <button class="btn btn-soft" @click="resetUserForm">清空用户表单</button>
+                </div>
+
+                <form class="form-grid" @submit.prevent="saveUser">
+                    <label class="field span-4">
+                        <span>用户名</span>
+                        <input class="input" v-model="forms.user.username" placeholder="例如：admin" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>邮箱</span>
+                        <input class="input" v-model="forms.user.email" placeholder="user@example.com" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>手机号</span>
+                        <input class="input" v-model="forms.user.phone" placeholder="13800001234" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>密码</span>
+                        <input class="input" type="password" v-model="forms.user.password" placeholder="新建用户时必填">
+                    </label>
+                    <label class="field span-4">
+                        <span>状态</span>
+                        <select class="select" v-model="forms.user.status">
                             <option>ACTIVE</option>
                             <option>DISABLED</option>
                             <option>LOCKED</option>
                         </select>
-                    </div>
-                    <div class="col-md-6">
-                        <select class="form-select" v-model.number="forms.user.departmentId">
-                            <option :value="null">无部门</option>
-                            <option v-for="item in flatDepartments" :value="item.id">{{ item.name }}</option>
+                    </label>
+                    <label class="field span-4">
+                        <span>所属部门</span>
+                        <select class="select" v-model.number="forms.user.departmentId">
+                            <option :value="null">未分配部门</option>
+                            <option v-for="item in flatDepartments" :key="item.id" :value="item.id">{{ item.indentedName }}</option>
                         </select>
-                    </div>
-                    <div class="col-12">
-                        <select class="form-select" multiple v-model="forms.user.roleIds">
-                            <option v-for="role in roles" :value="role.id">{{ role.code }} / {{ role.name }}</option>
+                    </label>
+                    <label class="field span-12">
+                        <span>直属角色</span>
+                        <select class="select" multiple v-model="forms.user.roleIds">
+                            <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.code }} / {{ role.name }}</option>
                         </select>
-                    </div>
-                    <div class="col-12">
-                        <button class="btn btn-dark">{{ forms.user.id ? '更新用户' : '创建用户' }}</button>
+                        <div class="helper">角色是业务身份包，例如“系统管理员”“审计员”。角色本身不直接执行动作，它聚合多个权限。</div>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.user.id ? '更新用户' : '创建用户' }}</button>
                     </div>
                 </form>
-                <div class="table-responsive">
-                    <table class="table table-hover small-table">
-                        <thead><tr><th>用户</th><th>部门</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
+
+                <div class="toolbar">
+                    <div class="helper">最终权限 = 用户直属角色权限 + 部门继承角色权限。下方列表展示的是合并后的结果。</div>
+                </div>
+
+                <div class="data-wrap scroll-region tall" style="margin-top:20px;">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>用户</th>
+                            <th>部门 / 状态</th>
+                            <th>生效角色</th>
+                            <th>生效权限</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
                         <tbody>
                         <tr v-for="user in users" :key="user.id">
-                            <td>{{ user.username }}<div class="text-secondary">{{ user.email }}</div></td>
-                            <td>{{ user.departmentName || '-' }}</td>
-                            <td>{{ user.roleCodes.join(', ') || '-' }}</td>
-                            <td><span class="chip" :class="user.status">{{ user.status }}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)">编辑</button>
-                                <button class="btn btn-sm btn-outline-warning me-1" @click="changeUserStatus(user)">状态</button>
-                                <button class="btn btn-sm btn-outline-success me-1" @click="resetPassword(user)">密码</button>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user.id)">删除</button>
+                                <div class="primary-cell">
+                                    <strong>{{ user.username }}</strong>
+                                    <span class="record-subtitle">{{ user.email }}</span>
+                                    <span class="record-subtitle">手机：{{ user.phone }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="record-stack">
+                                    <span>{{ user.departmentName || '未分配部门' }}</span>
+                                    <span class="status-pill" :class="user.status">{{ statusText(user.status) }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    <span class="chip" v-for="code in user.roleCodes" :key="code">{{ roleLabel(code) }}</span>
+                                    <span class="chip muted" v-if="!user.roleCodes.length">暂无角色</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    <span class="chip alt" v-for="code in user.permissionCodes" :key="code">{{ permissionLabel(code) }}</span>
+                                    <span class="chip muted" v-if="!user.permissionCodes.length">暂无权限</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="record-actions table-actions">
+                                    <button class="btn btn-soft" @click="editUser(user)">编辑</button>
+                                    <button class="btn btn-soft" @click="changeUserStatus(user)">改状态</button>
+                                    <button class="btn btn-soft" @click="resetPassword(user)">重置密码</button>
+                                    <button class="btn btn-danger" @click="deleteUser(user.id)">删除</button>
+                                </div>
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </article>
 
-        <div class="col-12 col-xl-5">
-            <div class="card p-4 mb-4">
-                <h2 class="h5">部门</h2>
-                <form class="row g-3 mb-3" @submit.prevent="saveDepartment">
-                    <div class="col-md-6"><input class="form-control" v-model="forms.department.name" placeholder="部门名称" required></div>
-                    <div class="col-md-6">
-                        <select class="form-select" v-model.number="forms.department.parentId">
-                            <option :value="null">顶级部门</option>
-                            <option v-for="item in flatDepartments" :value="item.id">{{ item.name }}</option>
-                        </select>
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">审计轨迹</h2>
+                        <p class="panel-desc">审计日志记录后台操作和认证过程，是演示“谁在什么时间做了什么”的证据链。</p>
                     </div>
-                    <div class="col-12">
-                        <select class="form-select" multiple v-model="forms.department.roleIds">
-                            <option v-for="role in roles" :value="role.id">{{ role.code }}</option>
-                        </select>
-                    </div>
-                    <div class="col-12"><button class="btn btn-dark">{{ forms.department.id ? '更新部门' : '创建部门' }}</button></div>
-                </form>
-                <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="department in flatDepartments" :key="department.id">
-                        <span>{{ department.name }}</span>
-                        <span>
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editDepartment(department)">编辑</button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteDepartment(department.id)">删除</button>
-                        </span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card p-4">
-                <h2 class="h5">角色</h2>
-                <form class="row g-3 mb-3" @submit.prevent="saveRole">
-                    <div class="col-md-6"><input class="form-control" v-model="forms.role.code" placeholder="角色编码" required></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.role.name" placeholder="角色名称" required></div>
-                    <div class="col-12"><input class="form-control" v-model="forms.role.description" placeholder="角色描述"></div>
-                    <div class="col-12">
-                        <select class="form-select" multiple v-model="forms.role.permissionIds">
-                            <option v-for="permission in permissions" :value="permission.id">{{ permission.code }}</option>
-                        </select>
-                    </div>
-                    <div class="col-12"><button class="btn btn-dark">{{ forms.role.id ? '更新角色' : '创建角色' }}</button></div>
-                </form>
-                <ul class="list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center" v-for="role in roles" :key="role.id">
-                        <span>{{ role.code }} / {{ role.name }}</span>
-                        <span>
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(role)">编辑</button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteRole(role.id)">删除</button>
-                        </span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mt-1">
-        <div class="col-12 col-xl-6">
-            <div class="card p-4">
-                <h2 class="h5">应用客户端</h2>
-                <form class="row g-3 mb-3" @submit.prevent="saveApp">
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientId" placeholder="clientId" required></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientName" placeholder="应用名" required></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.clientSecret" placeholder="clientSecret"></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.redirectUrisText" placeholder="redirectUris 逗号分隔"></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.postLogoutRedirectUrisText" placeholder="postLogoutRedirectUris"></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.scopesText" placeholder="scopes"></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.grantTypesText" placeholder="grantTypes"></div>
-                    <div class="col-md-6"><input class="form-control" v-model="forms.app.authenticationMethodsText" placeholder="auth methods"></div>
-                    <div class="col-12 form-check"><input class="form-check-input" type="checkbox" v-model="forms.app.requireProofKey" id="pkce"><label class="form-check-label" for="pkce">强制 PKCE</label></div>
-                    <div class="col-12"><button class="btn btn-dark">{{ forms.app.id ? '更新应用' : '创建应用' }}</button></div>
-                </form>
-                <div class="table-responsive">
-                    <table class="table table-hover small-table">
-                        <thead><tr><th>应用</th><th>配置</th><th>操作</th></tr></thead>
-                        <tbody>
-                        <tr v-for="app in apps" :key="app.id">
-                            <td>{{ app.clientId }} / {{ app.clientName }}</td>
-                            <td>{{ app.redirectUris.join(', ') }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary me-1" @click="editApp(app)">编辑</button>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteApp(app.id)">删除</button>
-                            </td>
+                    <button class="btn btn-soft" @click="loadLogs">刷新日志</button>
+                </div>
+                <div class="data-wrap">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>用户</th>
+                            <th>动作</th>
+                            <th>状态</th>
+                            <th>详情</th>
                         </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-6">
-            <div class="card p-4">
-                <div class="section-title mb-3">
-                    <h2 class="h5 mb-0">审计日志</h2>
-                    <button class="btn btn-outline-secondary btn-sm" @click="loadLogs">刷新日志</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover small-table">
-                        <thead><tr><th>时间</th><th>用户</th><th>动作</th><th>状态</th><th>详情</th></tr></thead>
+                        </thead>
                         <tbody>
-                        <tr v-for="log in logs" :key="log.id">
+                        <tr v-for="log in pagedItems(logs, 'logs')" :key="log.id">
                             <td>{{ formatTime(log.timestamp) }}</td>
-                            <td>{{ log.username }}</td>
+                            <td>{{ log.username || '-' }}</td>
                             <td>{{ log.action }}</td>
-                            <td>{{ log.status }}</td>
-                            <td>{{ log.details }}</td>
+                            <td><span class="mini-tag">{{ log.status }}</span></td>
+                            <td>{{ log.details || '-' }}</td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+                <div class="pagination-bar" v-if="logs.length">
+                    <div class="pagination-status">共 {{ logs.length }} 条审计记录，当前第 {{ currentPage('logs') }} / {{ totalPages(logs, 'logs') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.logs.size" @change="syncPage('logs', logs)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('logs', currentPage('logs') - 1, logs)" :disabled="currentPage('logs') === 1" aria-label="日志上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(logs, 'logs')" :key="`logs-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('logs') }" @click="setPage('logs', page, logs)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('logs', currentPage('logs') + 1, logs)" :disabled="currentPage('logs') === totalPages(logs, 'logs')" aria-label="日志下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
         </div>
-    </div>
+
+        <div class="stack">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">部门拓扑</h2>
+                        <p class="panel-desc">部门不仅是组织结构，也能挂接角色，从而让下级用户继承治理能力。</p>
+                    </div>
+                </div>
+                <form class="form-grid" @submit.prevent="saveDepartment">
+                    <label class="field span-6">
+                        <span>部门名称</span>
+                        <input class="input" v-model="forms.department.name" placeholder="例如：研发中心" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>上级部门</span>
+                        <select class="select" v-model.number="forms.department.parentId">
+                            <option :value="null">顶级部门</option>
+                            <option v-for="item in flatDepartments" :key="item.id" :value="item.id">{{ item.indentedName }}</option>
+                        </select>
+                    </label>
+                    <label class="field span-12">
+                        <span>挂载角色</span>
+                        <select class="select" multiple v-model="forms.department.roleIds">
+                            <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.code }} / {{ role.name }}</option>
+                        </select>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.department.id ? '更新部门' : '创建部门' }}</button>
+                    </div>
+                </form>
+
+                <div class="records scroll-region compact" style="margin-top:20px;">
+                    <article class="record" v-for="department in flatDepartments" :key="department.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ department.indentedName }}</h3>
+                                <div class="record-subtitle">部门角色会被该部门及其子层级用户继承。</div>
+                            </div>
+                            <div class="record-actions">
+                                <button class="btn btn-soft" @click="editDepartment(department)">编辑</button>
+                                <button class="btn btn-danger" @click="deleteDepartment(department.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="chip" v-for="code in department.roleCodes" :key="code">{{ roleLabel(code) }}</span>
+                            <span class="chip muted" v-if="!department.roleCodes.length">未挂载角色</span>
+                        </div>
+                    </article>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">角色编排</h2>
+                        <p class="panel-desc">角色是业务身份包，聚合多个权限。答辩时可用这一栏解释 RBAC 的“中间层”。</p>
+                    </div>
+                </div>
+                <form class="form-grid" @submit.prevent="saveRole">
+                    <label class="field span-4">
+                        <span>角色编码</span>
+                        <input class="input" v-model="forms.role.code" placeholder="例如：ADMIN" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>角色名称</span>
+                        <input class="input" v-model="forms.role.name" placeholder="例如：系统管理员" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>角色说明</span>
+                        <input class="input" v-model="forms.role.description" placeholder="例如：拥有全部后台治理能力">
+                    </label>
+                    <label class="field span-12">
+                        <span>绑定权限</span>
+                        <select class="select" multiple v-model="forms.role.permissionIds">
+                            <option v-for="permission in permissions" :key="permission.id" :value="permission.id">{{ permission.code }} / {{ permission.name }}</option>
+                        </select>
+                        <div class="helper">权限是最小动作单元，例如“用户查询”“应用写入”。Spring 运行时会把它们映射成 `PERM_*` Authority。</div>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.role.id ? '更新角色' : '创建角色' }}</button>
+                    </div>
+                </form>
+
+                <div class="records" style="margin-top:20px;">
+                    <article class="record" v-for="role in pagedItems(roles, 'roles')" :key="role.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ role.code }} / {{ role.name }}</h3>
+                                <div class="record-subtitle">{{ role.description || '未填写角色说明' }}</div>
+                            </div>
+                            <div class="record-actions">
+                                <button class="btn btn-soft" @click="editRole(role)">编辑</button>
+                                <button class="btn btn-danger" @click="deleteRole(role.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="chip alt" v-for="permission in role.permissions" :key="permission.id">{{ permission.code }} / {{ permission.name }}</span>
+                            <span class="chip muted" v-if="!role.permissions.length">未绑定权限</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="pagination-bar" v-if="roles.length">
+                    <div class="pagination-status">共 {{ roles.length }} 个角色包，当前第 {{ currentPage('roles') }} / {{ totalPages(roles, 'roles') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.roles.size" @change="syncPage('roles', roles)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('roles', currentPage('roles') - 1, roles)" :disabled="currentPage('roles') === 1" aria-label="角色上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(roles, 'roles')" :key="`roles-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('roles') }" @click="setPage('roles', page, roles)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('roles', currentPage('roles') + 1, roles)" :disabled="currentPage('roles') === totalPages(roles, 'roles')" aria-label="角色下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">权限词典</h2>
+                        <p class="panel-desc">每个 Permission 都是最小授权颗粒。这里直接给出中文名称、用途和资源归属。</p>
+                    </div>
+                </div>
+                <div class="section-grid scroll-region compact">
+                    <article class="legend-card" v-for="permission in permissions" :key="permission.id">
+                        <h4>{{ permission.code }}</h4>
+                        <p>{{ permission.name }}{{ permission.description && permission.description !== permission.name ? '：' + permission.description : '' }}</p>
+                        <div class="chip-list" style="margin-top:12px;">
+                            <span class="mini-tag">{{ permissionTypeText(permission.permissionType) }}</span>
+                            <span class="mini-tag mono">{{ permission.resource }}</span>
+                        </div>
+                    </article>
+                    <div class="empty-state" v-if="!permissions.length">暂无权限数据。</div>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">应用客户端注册</h2>
+                        <p class="panel-desc">这里维护 OAuth2 客户端。重点信息包括回调地址、Scope、认证方式和是否强制 PKCE。</p>
+                    </div>
+                </div>
+                <form class="form-grid" @submit.prevent="saveApp">
+                    <label class="field span-6">
+                        <span>Client ID</span>
+                        <input class="input" v-model="forms.app.clientId" placeholder="app-a" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>应用名称</span>
+                        <input class="input" v-model="forms.app.clientName" placeholder="Demo App A" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>Client Secret</span>
+                        <input class="input" v-model="forms.app.clientSecret" placeholder="留空表示更新时不改">
+                    </label>
+                    <label class="field span-6">
+                        <span>授权回调地址</span>
+                        <input class="input" v-model="forms.app.redirectUrisText" placeholder="逗号分隔">
+                    </label>
+                    <label class="field span-6">
+                        <span>退出后回跳地址</span>
+                        <input class="input" v-model="forms.app.postLogoutRedirectUrisText" placeholder="逗号分隔">
+                    </label>
+                    <label class="field span-6">
+                        <span>Scopes</span>
+                        <input class="input" v-model="forms.app.scopesText" placeholder="openid,profile">
+                    </label>
+                    <label class="field span-6">
+                        <span>Grant Types</span>
+                        <input class="input" v-model="forms.app.grantTypesText" placeholder="authorization_code,refresh_token">
+                    </label>
+                    <label class="field span-6">
+                        <span>认证方式</span>
+                        <input class="input" v-model="forms.app.authenticationMethodsText" placeholder="client_secret_basic">
+                    </label>
+                    <label class="field span-12">
+                        <span>PKCE</span>
+                        <select class="select" v-model="forms.app.requireProofKey">
+                            <option :value="true">强制启用 PKCE</option>
+                            <option :value="false">不强制 PKCE</option>
+                        </select>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.app.id ? '更新应用' : '创建应用' }}</button>
+                    </div>
+                </form>
+
+                <div class="records" style="margin-top:20px;">
+                    <article class="record" v-for="app in pagedItems(apps, 'apps')" :key="app.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ app.clientId }} / {{ app.clientName }}</h3>
+                                <div class="record-subtitle">回调地址：{{ app.redirectUris.join('，') || '未配置' }}</div>
+                            </div>
+                            <div class="record-actions">
+                                <button class="btn btn-soft" @click="editApp(app)">编辑</button>
+                                <button class="btn btn-danger" @click="deleteApp(app.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="mini-tag">Scopes：{{ app.scopes.join(', ') || '-' }}</span>
+                            <span class="mini-tag">Grant Types：{{ app.grantTypes.join(', ') || '-' }}</span>
+                            <span class="mini-tag">{{ app.requireProofKey ? 'PKCE 已强制' : 'PKCE 未强制' }}</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="pagination-bar" v-if="apps.length">
+                    <div class="pagination-status">共 {{ apps.length }} 个客户端，当前第 {{ currentPage('apps') }} / {{ totalPages(apps, 'apps') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.apps.size" @change="syncPage('apps', apps)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('apps', currentPage('apps') - 1, apps)" :disabled="currentPage('apps') === 1" aria-label="应用上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(apps, 'apps')" :key="`apps-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('apps') }" @click="setPage('apps', page, apps)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('apps', currentPage('apps') + 1, apps)" :disabled="currentPage('apps') === totalPages(apps, 'apps')" aria-label="应用下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Authority 映射说明</h2>
+                        <p class="panel-desc">这部分是给答辩讲解准备的：Spring Security 最终并不直接判断“角色对象”或“权限对象”，而是判断运行时 Authority 字符串。</p>
+                    </div>
+                </div>
+                <div class="section-grid">
+                    <div class="legend-card">
+                        <h4>`ROLE_ADMIN`</h4>
+                        <p>表示角色 Authority。由角色编码 `ADMIN` 映射而来，供 `hasRole('ADMIN')` 这类表达式使用。</p>
+                    </div>
+                    <div class="legend-card">
+                        <h4>`PERM_USER_WRITE`</h4>
+                        <p>表示权限 Authority。由权限编码 `USER_WRITE` 映射而来，供 `hasAuthority('PERM_USER_WRITE')` 使用。</p>
+                    </div>
+                    <div class="legend-card">
+                        <h4>角色与权限的关系</h4>
+                        <p>角色是业务身份包，权限是最小动作单元。Spring 在运行时把两者都铺平成 Authority，再参与访问控制判断。</p>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
 </div>
 
 <script>
 const { createApp } = Vue;
+
 createApp({
     data() {
         return {
-            users: [], departments: [], roles: [], permissions: [], apps: [], logs: [],
+            users: [],
+            departments: [],
+            roles: [],
+            permissions: [],
+            apps: [],
+            logs: [],
+            glossary: [
+                {
+                    title: '角色 Role',
+                    description: '角色是业务身份包，例如系统管理员、研发工程师、审计员。它负责聚合多个权限，并分配给用户或部门。'
+                },
+                {
+                    title: '权限 Permission',
+                    description: '权限是最小动作单元，例如用户查询、部门写入、访问某个应用。它决定“具体能做什么”。'
+                },
+                {
+                    title: 'Spring Authority',
+                    description: 'Authority 是 Spring Security 运行时判断的授权字符串。角色会映射为 ROLE_*，权限会映射为 PERM_*。'
+                },
+                {
+                    title: 'Claims',
+                    description: 'Claims 是 IAM 写入 Token 或 OIDC 用户信息中的身份上下文，例如用户名、角色、权限、邮箱等。'
+                }
+            ],
+            pageSizeOptions: [4, 6, 8, 10],
+            pagination: {
+                users: { page: 1, size: 6 },
+                departments: { page: 1, size: 4 },
+                roles: { page: 1, size: 4 },
+                permissions: { page: 1, size: 6 },
+                apps: { page: 1, size: 4 },
+                logs: { page: 1, size: 6 }
+            },
             forms: {
                 user: { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] },
                 department: { id: null, name: '', parentId: null, roleIds: [] },
                 role: { id: null, code: '', name: '', description: '', permissionIds: [] },
-                app: { id: null, clientId: '', clientName: '', clientSecret: '', redirectUrisText: '', postLogoutRedirectUrisText: '', scopesText: 'openid,profile', grantTypesText: 'authorization_code,refresh_token', authenticationMethodsText: 'client_secret_basic', requireProofKey: true }
+                app: {
+                    id: null,
+                    clientId: '',
+                    clientName: '',
+                    clientSecret: '',
+                    redirectUrisText: '',
+                    postLogoutRedirectUrisText: '',
+                    scopesText: 'openid,profile',
+                    grantTypesText: 'authorization_code,refresh_token',
+                    authenticationMethodsText: 'client_secret_basic',
+                    requireProofKey: true
+                }
             }
         };
     },
     computed: {
         flatDepartments() {
             const result = [];
-            const walk = (items) => (items || []).forEach(item => { result.push(item); walk(item.children); });
+            const walk = (items, depth = 0) => {
+                (items || []).forEach(item => {
+                    result.push({
+                        ...item,
+                        depth,
+                        indentedName: `${'　'.repeat(depth)}${item.name}`
+                    });
+                    walk(item.children, depth + 1);
+                });
+            };
             walk(this.departments);
             return result;
+        },
+        metrics() {
+            return [
+                { label: '用户主体', value: this.users.length, note: '系统里被治理的账号数量' },
+                { label: '角色包', value: this.roles.length, note: '承担业务身份聚合能力' },
+                { label: '权限颗粒', value: this.permissions.length, note: '最小可授权动作单元' },
+                { label: '客户端', value: this.apps.length, note: '接入 IAM 的 OAuth2 应用' },
+                { label: '审计记录', value: this.logs.length, note: '最近可见的操作与认证痕迹' },
+                { label: '锁定 / 禁用', value: this.users.filter(user => user.status !== 'ACTIVE').length, note: '可用来演示状态控制与风控' }
+            ];
         }
     },
     methods: {
         async api(path, options = {}) {
-            const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
-            if (!response.ok) throw new Error(await response.text());
-            if (response.status === 204) return null;
+            const response = await fetch(path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            if (response.status === 204) {
+                return null;
+            }
             return response.headers.get('content-type')?.includes('json') ? response.json() : response.text();
         },
-        parseList(text) { return (text || '').split(',').map(v => v.trim()).filter(Boolean); },
-        async loadAll() { await Promise.all([this.loadUsers(), this.loadDepartments(), this.loadRoles(), this.loadPermissions(), this.loadApps(), this.loadLogs()]); },
-        async loadUsers() { this.users = await this.api('/api/users'); },
-        async loadDepartments() { this.departments = await this.api('/api/departments'); },
-        async loadRoles() { this.roles = await this.api('/api/roles'); },
-        async loadPermissions() { this.permissions = await this.api('/api/permissions'); },
-        async loadApps() { this.apps = await this.api('/api/apps'); },
-        async loadLogs() { this.logs = await this.api('/api/audit-logs'); },
-        resetUserForm() { this.forms.user = { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] }; },
-        editUser(user) { this.forms.user = { ...user, phone: user.phone.replace('****', '0000'), password: '', roleIds: this.roles.filter(r => user.roleCodes.includes(r.code)).map(r => r.id) }; },
-        async saveUser() { const m = this.forms.user.id ? 'PUT' : 'POST'; const p = this.forms.user.id ? `/api/users/${this.forms.user.id}` : '/api/users'; await this.api(p, { method: m, body: JSON.stringify(this.forms.user) }); this.resetUserForm(); await this.loadUsers(); await this.loadLogs(); },
-        async deleteUser(id) { if (confirm('确认删除用户？')) { await this.api(`/api/users/${id}`, { method: 'DELETE' }); await this.loadUsers(); await this.loadLogs(); } },
-        async changeUserStatus(user) { const status = prompt('输入状态 ACTIVE / DISABLED / LOCKED', user.status); if (status) { await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' }); await this.loadUsers(); await this.loadLogs(); } },
-        async resetPassword(user) { const newPassword = prompt(`给 ${user.username} 设置新密码`, 'Reset#2026!Temp'); if (newPassword) { await this.api(`/api/users/${user.id}/password`, { method: 'PATCH', body: JSON.stringify({ newPassword }) }); await this.loadLogs(); } },
-        editDepartment(item) { this.forms.department = { id: item.id, name: item.name, parentId: item.parentId, roleIds: this.roles.filter(r => item.roleCodes.includes(r.code)).map(r => r.id) }; },
-        async saveDepartment() { const m = this.forms.department.id ? 'PUT' : 'POST'; const p = this.forms.department.id ? `/api/departments/${this.forms.department.id}` : '/api/departments'; await this.api(p, { method: m, body: JSON.stringify(this.forms.department) }); this.forms.department = { id: null, name: '', parentId: null, roleIds: [] }; await this.loadDepartments(); await this.loadLogs(); },
-        async deleteDepartment(id) { if (confirm('确认删除部门？')) { await this.api(`/api/departments/${id}`, { method: 'DELETE' }); await this.loadDepartments(); await this.loadLogs(); } },
-        editRole(role) { this.forms.role = { id: role.id, code: role.code, name: role.name, description: role.description, permissionIds: role.permissions.map(p => p.id) }; },
-        async saveRole() { const m = this.forms.role.id ? 'PUT' : 'POST'; const p = this.forms.role.id ? `/api/roles/${this.forms.role.id}` : '/api/roles'; await this.api(p, { method: m, body: JSON.stringify(this.forms.role) }); this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] }; await this.loadRoles(); await this.loadLogs(); },
-        async deleteRole(id) { if (confirm('确认删除角色？')) { await this.api(`/api/roles/${id}`, { method: 'DELETE' }); await this.loadRoles(); await this.loadLogs(); } },
-        editApp(app) { this.forms.app = { id: app.id, clientId: app.clientId, clientName: app.clientName, clientSecret: '', redirectUrisText: app.redirectUris.join(','), postLogoutRedirectUrisText: app.postLogoutRedirectUris.join(','), scopesText: app.scopes.join(','), grantTypesText: app.grantTypes.join(','), authenticationMethodsText: app.authenticationMethods.join(','), requireProofKey: app.requireProofKey }; },
-        async saveApp() { const payload = { clientId: this.forms.app.clientId, clientName: this.forms.app.clientName, clientSecret: this.forms.app.clientSecret, redirectUris: this.parseList(this.forms.app.redirectUrisText), postLogoutRedirectUris: this.parseList(this.forms.app.postLogoutRedirectUrisText), scopes: this.parseList(this.forms.app.scopesText), grantTypes: this.parseList(this.forms.app.grantTypesText), authenticationMethods: this.parseList(this.forms.app.authenticationMethodsText), requireProofKey: this.forms.app.requireProofKey, requireAuthorizationConsent: false, active: true }; const m = this.forms.app.id ? 'PUT' : 'POST'; const p = this.forms.app.id ? `/api/apps/${this.forms.app.id}` : '/api/apps'; await this.api(p, { method: m, body: JSON.stringify(payload) }); this.forms.app = { id: null, clientId: '', clientName: '', clientSecret: '', redirectUrisText: '', postLogoutRedirectUrisText: '', scopesText: 'openid,profile', grantTypesText: 'authorization_code,refresh_token', authenticationMethodsText: 'client_secret_basic', requireProofKey: true }; await this.loadApps(); await this.loadLogs(); },
-        async deleteApp(id) { if (confirm('确认删除应用？')) { await this.api(`/api/apps/${id}`, { method: 'DELETE' }); await this.loadApps(); await this.loadLogs(); } },
-        formatTime(value) { return value ? new Date(value).toLocaleString('zh-CN') : '-'; }
+        parseList(text) {
+            return (text || '').split(',').map(value => value.trim()).filter(Boolean);
+        },
+        async loadAll() {
+            await Promise.all([
+                this.loadUsers(),
+                this.loadDepartments(),
+                this.loadRoles(),
+                this.loadPermissions(),
+                this.loadApps(),
+                this.loadLogs()
+            ]);
+        },
+        async loadUsers() {
+            this.users = await this.api('/api/users');
+            this.syncPage('users', this.users);
+        },
+        async loadDepartments() {
+            this.departments = await this.api('/api/departments');
+            this.syncPage('departments', this.flatDepartments);
+        },
+        async loadRoles() {
+            this.roles = await this.api('/api/roles');
+            this.syncPage('roles', this.roles);
+        },
+        async loadPermissions() {
+            this.permissions = await this.api('/api/permissions');
+            this.syncPage('permissions', this.permissions);
+        },
+        async loadApps() {
+            this.apps = await this.api('/api/apps');
+            this.syncPage('apps', this.apps);
+        },
+        async loadLogs() {
+            this.logs = await this.api('/api/audit-logs');
+            this.syncPage('logs', this.logs);
+        },
+        resetUserForm() {
+            this.forms.user = { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] };
+        },
+        currentPage(key) {
+            return this.pagination[key]?.page || 1;
+        },
+        totalPages(items, key) {
+            const size = this.pagination[key]?.size || 1;
+            return Math.max(1, Math.ceil((items?.length || 0) / size));
+        },
+        pagedItems(items, key) {
+            const size = this.pagination[key]?.size || 1;
+            const page = Math.min(this.currentPage(key), this.totalPages(items, key));
+            const start = (page - 1) * size;
+            return (items || []).slice(start, start + size);
+        },
+        pageNumbers(items, key) {
+            const total = this.totalPages(items, key);
+            const current = this.currentPage(key);
+            if (total <= 5) {
+                return Array.from({ length: total }, (_, index) => index + 1);
+            }
+            if (current <= 3) {
+                return [1, 2, 3, 4, '...', total];
+            }
+            if (current >= total - 2) {
+                return [1, '...', total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+        setPage(key, page, items) {
+            const total = this.totalPages(items, key);
+            const nextPage = Math.max(1, Math.min(total, Number(page) || 1));
+            this.pagination[key].page = nextPage;
+        },
+        syncPage(key, items) {
+            this.setPage(key, this.currentPage(key), items);
+        },
+        statusText(status) {
+            const map = { ACTIVE: '启用中', LOCKED: '已锁定', DISABLED: '已禁用' };
+            return map[status] || status;
+        },
+        permissionTypeText(type) {
+            const map = { FUNCTION: '功能权限', APPLICATION: '应用访问' };
+            return map[type] || type;
+        },
+        roleLabel(code) {
+            const known = {
+                ADMIN: 'ADMIN / 系统管理员',
+                ENGINEER: 'ENGINEER / 研发工程师',
+                AUDITOR: 'AUDITOR / 审计员'
+            };
+            return known[code] || code;
+        },
+        permissionLabel(code) {
+            const permission = this.permissions.find(item => item.code === code);
+            if (permission) {
+                return `${permission.code} / ${permission.name}`;
+            }
+            return code;
+        },
+        editUser(user) {
+            this.forms.user = {
+                ...user,
+                phone: (user.phone || '').replace('****', '0000'),
+                password: '',
+                roleIds: this.roles.filter(role => user.roleCodes.includes(role.code)).map(role => role.id)
+            };
+        },
+        async saveUser() {
+            const method = this.forms.user.id ? 'PUT' : 'POST';
+            const path = this.forms.user.id ? `/api/users/${this.forms.user.id}` : '/api/users';
+            await this.api(path, { method, body: JSON.stringify(this.forms.user) });
+            this.resetUserForm();
+            await this.loadUsers();
+            await this.loadLogs();
+        },
+        async deleteUser(id) {
+            if (!confirm('确认删除该用户？')) {
+                return;
+            }
+            await this.api(`/api/users/${id}`, { method: 'DELETE' });
+            await this.loadUsers();
+            await this.loadLogs();
+        },
+        async changeUserStatus(user) {
+            const status = prompt('输入新的状态：ACTIVE / DISABLED / LOCKED', user.status);
+            if (!status) {
+                return;
+            }
+            await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' });
+            await this.loadUsers();
+            await this.loadLogs();
+        },
+        async resetPassword(user) {
+            const newPassword = prompt(`给 ${user.username} 设置新密码`, 'Reset#2026!Temp');
+            if (!newPassword) {
+                return;
+            }
+            await this.api(`/api/users/${user.id}/password`, {
+                method: 'PATCH',
+                body: JSON.stringify({ newPassword })
+            });
+            await this.loadLogs();
+        },
+        editDepartment(item) {
+            this.forms.department = {
+                id: item.id,
+                name: item.name,
+                parentId: item.parentId,
+                roleIds: this.roles.filter(role => item.roleCodes.includes(role.code)).map(role => role.id)
+            };
+        },
+        async saveDepartment() {
+            const method = this.forms.department.id ? 'PUT' : 'POST';
+            const path = this.forms.department.id ? `/api/departments/${this.forms.department.id}` : '/api/departments';
+            await this.api(path, { method, body: JSON.stringify(this.forms.department) });
+            this.forms.department = { id: null, name: '', parentId: null, roleIds: [] };
+            await this.loadDepartments();
+            await this.loadLogs();
+        },
+        async deleteDepartment(id) {
+            if (!confirm('确认删除该部门？')) {
+                return;
+            }
+            await this.api(`/api/departments/${id}`, { method: 'DELETE' });
+            await this.loadDepartments();
+            await this.loadLogs();
+        },
+        editRole(role) {
+            this.forms.role = {
+                id: role.id,
+                code: role.code,
+                name: role.name,
+                description: role.description,
+                permissionIds: role.permissions.map(permission => permission.id)
+            };
+        },
+        async saveRole() {
+            const method = this.forms.role.id ? 'PUT' : 'POST';
+            const path = this.forms.role.id ? `/api/roles/${this.forms.role.id}` : '/api/roles';
+            await this.api(path, { method, body: JSON.stringify(this.forms.role) });
+            this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] };
+            await this.loadRoles();
+            await this.loadLogs();
+        },
+        async deleteRole(id) {
+            if (!confirm('确认删除该角色？')) {
+                return;
+            }
+            await this.api(`/api/roles/${id}`, { method: 'DELETE' });
+            await this.loadRoles();
+            await this.loadLogs();
+        },
+        editApp(app) {
+            this.forms.app = {
+                id: app.id,
+                clientId: app.clientId,
+                clientName: app.clientName,
+                clientSecret: '',
+                redirectUrisText: app.redirectUris.join(','),
+                postLogoutRedirectUrisText: app.postLogoutRedirectUris.join(','),
+                scopesText: app.scopes.join(','),
+                grantTypesText: app.grantTypes.join(','),
+                authenticationMethodsText: app.authenticationMethods.join(','),
+                requireProofKey: app.requireProofKey
+            };
+        },
+        async saveApp() {
+            const payload = {
+                clientId: this.forms.app.clientId,
+                clientName: this.forms.app.clientName,
+                clientSecret: this.forms.app.clientSecret,
+                redirectUris: this.parseList(this.forms.app.redirectUrisText),
+                postLogoutRedirectUris: this.parseList(this.forms.app.postLogoutRedirectUrisText),
+                scopes: this.parseList(this.forms.app.scopesText),
+                grantTypes: this.parseList(this.forms.app.grantTypesText),
+                authenticationMethods: this.parseList(this.forms.app.authenticationMethodsText),
+                requireProofKey: this.forms.app.requireProofKey,
+                requireAuthorizationConsent: false,
+                active: true
+            };
+            const method = this.forms.app.id ? 'PUT' : 'POST';
+            const path = this.forms.app.id ? `/api/apps/${this.forms.app.id}` : '/api/apps';
+            await this.api(path, { method, body: JSON.stringify(payload) });
+            this.forms.app = {
+                id: null,
+                clientId: '',
+                clientName: '',
+                clientSecret: '',
+                redirectUrisText: '',
+                postLogoutRedirectUrisText: '',
+                scopesText: 'openid,profile',
+                grantTypesText: 'authorization_code,refresh_token',
+                authenticationMethodsText: 'client_secret_basic',
+                requireProofKey: true
+            };
+            await this.loadApps();
+            await this.loadLogs();
+        },
+        async deleteApp(id) {
+            if (!confirm('确认删除该应用客户端？')) {
+                return;
+            }
+            await this.api(`/api/apps/${id}`, { method: 'DELETE' });
+            await this.loadApps();
+            await this.loadLogs();
+        },
+        formatTime(value) {
+            return value ? new Date(value).toLocaleString('zh-CN') : '-';
+        }
     },
-    async mounted() { try { await this.loadAll(); } catch (error) { alert(error.message); } }
+    async mounted() {
+        try {
+            await this.loadAll();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
 }).mount('#app');
 </script>
 </body>

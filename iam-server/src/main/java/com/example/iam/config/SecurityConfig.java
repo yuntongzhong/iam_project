@@ -87,7 +87,10 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/mfa/**", "/error", "/slo/**").permitAll()
                         .anyRequest().authenticated())
-                .formLogin(form -> form.successHandler(mfaAuthenticationSuccessHandler))
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .successHandler(mfaAuthenticationSuccessHandler)
+                        .permitAll())
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
                         .logoutSuccessHandler((request, response, authentication) ->

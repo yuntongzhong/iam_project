@@ -16,9 +16,39 @@ function Ensure-BuildArtifacts {
         return
     }
 
-    $missingJar = Get-AppConfig | Where-Object { -not (Test-Path $_.JarPath) }
-    if (@($missingJar).Count -gt 0) {
-        Write-Host "Jar files are missing. Running .\gradlew.bat build ..."
+    $apps = Get-AppConfig
+    $buildRequired = $false
+
+    foreach ($app in $apps) {
+        if (-not (Test-Path $app.JarPath)) {
+            $buildRequired = $true
+            break
+        }
+
+        $jarTime = (Get-Item $app.JarPath).LastWriteTime
+        $projectDir = Split-Path (Split-Path $app.JarPath -Parent) -Parent
+        $sourceCandidates = @(
+            (Join-Path $projectDir "src"),
+            (Join-Path $projectDir "build.gradle")
+        ) | Where-Object { Test-Path $_ }
+
+        foreach ($candidate in $sourceCandidates) {
+            $newerInput = Get-ChildItem -Path $candidate -Recurse -File |
+                Where-Object { $_.LastWriteTime -gt $jarTime } |
+                Select-Object -First 1
+            if ($newerInput) {
+                $buildRequired = $true
+                break
+            }
+        }
+
+        if ($buildRequired) {
+            break
+        }
+    }
+
+    if ($buildRequired) {
+        Write-Host "Jar files are missing or outdated. Running .\gradlew.bat build ..."
         Push-Location $paths.RepoRoot
         try {
             & .\gradlew.bat build

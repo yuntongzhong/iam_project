@@ -4,24 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo App B 已退出</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #fff7ed, #dcfce7); color: #0f172a; }
-        .card { width: min(520px, calc(100vw - 32px)); background: #fff; border-radius: 28px; padding: 32px; box-shadow: 0 24px 56px rgba(15, 23, 42, .12); }
-        .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-        .btn { padding: 12px 16px; border-radius: 999px; text-decoration: none; font-weight: 700; border: 1px solid #cbd5e1; color: #0f172a; }
-        .btn.primary { background: #b45309; border-color: #b45309; color: #fff; }
+        :root {
+            --bg: oklch(0.978 0.012 92);
+            --surface: oklch(0.992 0.004 95 / 0.92);
+            --ink: oklch(0.225 0.02 52);
+            --ink-soft: oklch(0.44 0.02 58);
+            --amber: oklch(0.68 0.12 52);
+            --shadow: 0 24px 80px rgba(59, 38, 16, 0.12);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 10% 10%, oklch(0.93 0.06 60 / 0.55), transparent 24%),
+                radial-gradient(circle at 90% 15%, oklch(0.9 0.06 140 / 0.35), transparent 20%),
+                linear-gradient(180deg, oklch(0.99 0.01 95), var(--bg));
+        }
+        .card {
+            width: min(720px, 100%);
+            padding: 30px;
+            border-radius: 32px;
+            background: var(--surface);
+            border: 1px solid rgba(134, 100, 61, 0.12);
+            box-shadow: var(--shadow);
+        }
+        .eyebrow {
+            display: inline-flex;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--amber) 16%, white);
+            color: oklch(0.44 0.08 48);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 18px 0 10px;
+            font: 700 clamp(2rem, 4vw, 3.2rem)/1.05 "Lexend", sans-serif;
+        }
+        p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.8;
+            max-width: 58ch;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 24px;
+            background: color-mix(in oklch, var(--amber) 10%, white);
+            color: var(--ink-soft);
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(134, 100, 61, 0.14);
+            background: rgba(255,255,255,.75);
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .btn.primary {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: oklch(0.98 0.004 95);
+        }
+        @media (max-width: 680px) {
+            .card { padding: 22px; border-radius: 24px; }
+            .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
-<div class="card">
-    <div style="font-size:12px; letter-spacing:.08em; color:#475569; font-weight:700;">DEMO APP B</div>
-    <h1 style="margin:10px 0 8px;">已完成单点登出</h1>
-    <p style="margin:0; color:#475569;">Demo App B 的本地会话、IAM 的全局登录态，以及其他接入客户端的本地会话都已收到登出指令。再次访问受保护页面时，将重新进入 IAM 登录流程。</p>
+<main class="card">
+    <div class="eyebrow">Demo App B</div>
+    <h1>第二接入方会话也已退出</h1>
+    <p>Demo App B 的本地会话已经结束，同时浏览器中的 IAM 全局登录态也已回收。再次访问时，会重新走统一认证与授权流程。</p>
+    <div class="summary">这个结束页主要用于说明第二个接入方也参与了单点退出链路，从而补全 SSO / SLO 的答辩叙事。</div>
     <div class="actions">
         <a class="btn primary" href="/">重新进入 Demo App B</a>
         <a class="btn" href="http://127.0.0.1:8081/">前往 Demo App A</a>
         <a class="btn" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
     </div>
-</div>
+</main>
 </body>
 </html>
