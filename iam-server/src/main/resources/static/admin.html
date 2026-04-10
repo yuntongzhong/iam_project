@@ -24,13 +24,13 @@
             --olive: oklch(0.62 0.074 132);
             --danger: oklch(0.58 0.17 28);
             --disabled: oklch(0.58 0.02 260);
-            --shadow: 0 30px 90px rgba(15, 23, 42, 0.08);
+            --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
             --space-xs: 4px;
             --space-sm: 8px;
             --space-md: 12px;
             --space-lg: 16px;
-            --space-xl: 24px;
-            --space-2xl: 32px;
+            --space-xl: 20px;
+            --space-2xl: 28px;
             --space-3xl: 48px;
             --radius-sm: 14px;
             --radius-md: 22px;
@@ -81,9 +81,9 @@
         }
 
         .app-shell {
-            max-width: 1560px;
+            max-width: 1540px;
             margin: 0 auto;
-            padding: 32px 20px 60px;
+            padding: 24px 18px 44px;
         }
 
         .hero,
@@ -95,12 +95,12 @@
 
         .hero {
             display: grid;
-            gap: var(--space-xl);
+            gap: 20px;
             grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
-            padding: clamp(24px, 3vw, 40px);
+            padding: clamp(22px, 2.8vw, 34px);
             border-radius: var(--radius-xl);
             background:
-                linear-gradient(135deg, oklch(0.26 0.05 250), oklch(0.34 0.07 238) 58%, oklch(0.4 0.08 220) 100%),
+                linear-gradient(135deg, oklch(0.31 0.08 255), oklch(0.48 0.12 255) 58%, oklch(0.72 0.13 52) 100%),
                 linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
             color: oklch(0.975 0.007 95);
             box-shadow: var(--shadow);
@@ -148,11 +148,11 @@
         }
 
         .hero-lead {
-            max-width: 62ch;
+            max-width: 58ch;
             margin: 0;
             color: rgba(242, 246, 255, 0.82);
-            font-size: 1rem;
-            line-height: 1.85;
+            font-size: 0.97rem;
+            line-height: 1.72;
         }
 
         .hero-actions,
@@ -180,9 +180,9 @@
             position: relative;
             z-index: 1;
             display: grid;
-            gap: var(--space-lg);
+            gap: 14px;
             align-content: space-between;
-            padding: 22px;
+            padding: 18px;
             border-radius: calc(var(--radius-lg) - 6px);
             background: rgba(248, 251, 255, 0.09);
             border: 1px solid rgba(248, 251, 255, 0.16);
@@ -198,7 +198,7 @@
         .signal {
             display: grid;
             gap: 6px;
-            padding: 14px 0;
+            padding: 12px 0;
             border-bottom: 1px solid rgba(255, 250, 243, 0.14);
         }
 
@@ -224,8 +224,8 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-height: 44px;
-            padding: 0 18px;
+            min-height: 40px;
+            padding: 0 16px;
             border-radius: 999px;
             border: 1px solid transparent;
             text-decoration: none;
@@ -275,14 +275,14 @@
         }
 
         .overview {
-            margin-top: 28px;
+            margin-top: 22px;
             display: grid;
-            gap: var(--space-xl);
+            gap: 20px;
             grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
         }
 
         .panel {
-            padding: 24px;
+            padding: 20px;
             border-radius: var(--radius-lg);
             background: var(--surface);
             border: 1px solid rgba(71, 85, 105, 0.12);
@@ -308,20 +308,20 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: var(--space-lg);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .panel-title {
             margin: 0;
             font-family: "Lexend", sans-serif;
-            font-size: 1.35rem;
+            font-size: 1.26rem;
         }
 
         .panel-desc {
             margin: 6px 0 0;
             max-width: 60ch;
             color: var(--ink-soft);
-            line-height: 1.7;
+            line-height: 1.62;
         }
 
         .metric-grid {
@@ -332,13 +332,13 @@
 
         .metric-card {
             position: relative;
-            padding: 18px;
+            padding: 16px;
             border-radius: 24px;
             background:
                 linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(244, 247, 255, 0.92)),
                 color-mix(in oklch, var(--surface-strong) 94%, white);
             border: 1px solid rgba(71, 85, 105, 0.1);
-            min-height: 138px;
+            min-height: 124px;
         }
 
         .metric-label {
@@ -348,14 +348,14 @@
         }
 
         .metric-value {
-            margin-top: 18px;
+            margin-top: 14px;
             font-family: "Lexend", sans-serif;
             font-size: clamp(1.7rem, 2.4vw, 2.8rem);
             line-height: 1;
         }
 
         .metric-note {
-            margin-top: 12px;
+            margin-top: 10px;
             color: color-mix(in oklch, var(--ink-soft) 82%, white);
             font-size: 13px;
         }
@@ -367,7 +367,7 @@
         }
 
         .glossary-item {
-            padding: 18px;
+            padding: 16px;
             border-radius: 22px;
             background: color-mix(in oklch, var(--surface-strong) 90%, white);
             border: 1px solid rgba(71, 85, 105, 0.1);
@@ -387,16 +387,33 @@
         }
 
         .workspace {
-            margin-top: 28px;
+            margin-top: 22px;
             display: grid;
-            gap: var(--space-xl);
-            grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.95fr);
+            gap: 20px;
+        }
+
+        .workspace-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr;
             align-items: start;
+        }
+
+        .workspace-grid > .stack:last-child {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start;
+        }
+
+        .workspace-grid > .stack:last-child > .panel:nth-child(4),
+        .workspace-grid > .stack:last-child > .panel:nth-child(5) {
+            grid-column: 1 / -1;
         }
 
         .stack {
             display: grid;
-            gap: var(--space-xl);
+            gap: 20px;
         }
 
         .form-grid {
@@ -423,17 +440,17 @@
         .input,
         .select {
             width: 100%;
-            min-height: 48px;
-            padding: 12px 14px;
-            border-radius: 16px;
+            min-height: 44px;
+            padding: 10px 12px;
+            border-radius: 14px;
             border: 1px solid rgba(71, 85, 105, 0.18);
             background: rgba(255, 255, 255, 0.92);
             color: var(--ink);
         }
 
         .select[multiple] {
-            min-height: 132px;
-            padding-block: 10px;
+            min-height: 118px;
+            padding-block: 8px;
         }
 
         .helper {
@@ -443,7 +460,7 @@
         }
 
         .callout {
-            padding: 18px;
+            padding: 16px;
             border-radius: 20px;
             background: color-mix(in oklch, var(--surface-strong) 82%, white);
             border: 1px solid rgba(71, 85, 105, 0.12);
@@ -458,7 +475,7 @@
         .toolbar {
             justify-content: space-between;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 16px;
         }
 
         .status-pill,
@@ -509,8 +526,8 @@
             position: relative;
             z-index: 1;
             display: grid;
-            gap: 14px;
-            padding: 18px;
+            gap: 12px;
+            padding: 16px;
             border-radius: 24px;
             background: rgba(255, 253, 248, 0.92);
             border: 1px solid rgba(71, 85, 105, 0.12);
@@ -546,7 +563,7 @@
         .chip {
             display: inline-flex;
             align-items: center;
-            padding: 8px 12px;
+            padding: 7px 10px;
             border-radius: 999px;
             background: color-mix(in oklch, var(--teal) 12%, white);
             color: var(--teal-deep);
@@ -566,23 +583,23 @@
 
         .data-wrap {
             overflow: auto;
-            border-radius: 24px;
+            border-radius: 20px;
             border: 1px solid rgba(71, 85, 105, 0.1);
             background: rgba(255, 255, 255, 0.94);
         }
 
         .scroll-region {
-            max-height: 640px;
+            max-height: 560px;
             overflow: auto;
             padding-right: 6px;
         }
 
         .scroll-region.tall {
-            max-height: 760px;
+            max-height: 640px;
         }
 
         .scroll-region.compact {
-            max-height: 560px;
+            max-height: 500px;
         }
 
         .data-table {
@@ -593,7 +610,7 @@
 
         .data-table th,
         .data-table td {
-            padding: 16px 18px;
+            padding: 13px 14px;
             text-align: left;
             vertical-align: top;
             border-bottom: 1px solid rgba(71, 85, 105, 0.08);
@@ -617,15 +634,25 @@
 
         .data-table .primary-cell {
             display: grid;
-            gap: 6px;
+            gap: 4px;
+        }
+
+        .permission-preview {
+            display: block;
+            max-width: 38ch;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            color: var(--ink-soft);
+            line-height: 1.65;
         }
 
         .table-actions {
             display: grid;
-            grid-template-columns: repeat(2, minmax(110px, max-content));
+            grid-template-columns: repeat(2, minmax(96px, 1fr));
             gap: 8px;
             justify-content: start;
-            min-width: 236px;
+            min-width: 212px;
         }
 
         .table-actions .btn {
@@ -751,20 +778,25 @@
         @media (max-width: 1180px) {
             .hero,
             .overview,
+            .workspace-grid,
             .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .workspace-grid > .stack:last-child {
                 grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 760px) {
             .app-shell {
-                padding-inline: 14px;
+                padding: 14px 14px 32px;
             }
 
             .panel,
             .hero {
-                padding: 20px;
-                border-radius: 24px;
+                padding: 18px;
+                border-radius: 22px;
             }
 
             .form-grid {
@@ -875,8 +907,7 @@
     </section>
 
     <section class="workspace">
-        <div class="stack">
-            <article class="panel">
+        <article class="panel">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">用户目录与生效权限</h2>
@@ -966,10 +997,8 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="chip-list">
-                                    <span class="chip alt" v-for="code in user.permissionCodes" :key="code">{{ permissionLabel(code) }}</span>
-                                    <span class="chip muted" v-if="!user.permissionCodes.length">暂无权限</span>
-                                </div>
+                                <span v-if="user.permissionCodes.length" class="permission-preview" :title="fullPermissionList(user.permissionCodes)">{{ permissionPreview(user.permissionCodes) }}</span>
+                                <span class="chip muted" v-else>暂无权限</span>
                             </td>
                             <td>
                                 <div class="record-actions table-actions">
@@ -983,8 +1012,10 @@
                         </tbody>
                     </table>
                 </div>
-            </article>
+        </article>
 
+        <div class="workspace-grid">
+        <div class="stack">
             <article class="panel">
                 <div class="panel-header">
                     <div>
@@ -1288,6 +1319,7 @@
                 </div>
             </article>
         </div>
+        </div>
     </section>
 </div>
 
@@ -1487,6 +1519,12 @@ createApp({
                 return `${permission.code} / ${permission.name}`;
             }
             return code;
+        },
+        fullPermissionList(codes) {
+            return (codes || []).map(code => this.permissionLabel(code)).join('，');
+        },
+        permissionPreview(codes) {
+            return this.fullPermissionList(codes);
         },
         editUser(user) {
             this.forms.user = {

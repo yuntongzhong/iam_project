@@ -30,9 +30,9 @@ public class LoginController {
                     ? null
                     : (AuthenticationException) session.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
             message = switch (exception == null ? "" : exception.getMessage()) {
-                case "User account is locked" -> "账号已锁定。连续输错密码次数过多，请先重置演示账号或由管理员解锁。";
+                case "User account is locked" -> "账号已锁定。连续输错密码次数过多，请稍后重试，或联系管理员解锁。";
                 case "User account is disabled" -> "账号已被禁用。请联系管理员恢复状态后再登录。";
-                default -> "用户名或密码错误。请重新输入，或使用 README 中的默认演示账号。";
+                default -> "用户名或密码错误，请重新输入。";
             };
             tone = "error";
         } else if (request.getParameter("logout") != null) {
@@ -69,11 +69,11 @@ public class LoginController {
                             --line: oklch(0.892 0.014 234);
                             --ink: oklch(0.2 0.03 255);
                             --ink-soft: oklch(0.45 0.02 245);
-                            --primary: oklch(0.48 0.11 240);
-                            --primary-deep: oklch(0.28 0.05 248);
-                            --accent: oklch(0.74 0.1 84);
+                            --primary: oklch(0.56 0.13 252);
+                            --primary-deep: oklch(0.33 0.08 255);
+                            --accent: oklch(0.72 0.13 52);
                             --danger: oklch(0.58 0.17 28);
-                            --shadow: 0 30px 90px rgba(15, 23, 42, 0.1);
+                            --shadow: 0 24px 72px rgba(15, 23, 42, 0.1);
                         }
 
                         * { box-sizing: border-box; }
@@ -84,8 +84,8 @@ public class LoginController {
                             font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
                             color: var(--ink);
                             background:
-                                radial-gradient(circle at 10%% 10%%, oklch(0.93 0.04 235 / 0.75), transparent 24%%),
-                                radial-gradient(circle at 88%% 12%%, oklch(0.95 0.06 84 / 0.32), transparent 18%%),
+                                radial-gradient(circle at 10%% 10%%, oklch(0.93 0.05 250 / 0.72), transparent 24%%),
+                                radial-gradient(circle at 88%% 12%%, oklch(0.92 0.08 52 / 0.26), transparent 18%%),
                                 linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
                         }
 
@@ -104,19 +104,19 @@ public class LoginController {
                         .shell {
                             position: relative;
                             z-index: 1;
-                            max-width: 1320px;
+                            max-width: 1180px;
                             margin: 0 auto;
                             min-height: 100vh;
                             display: grid;
                             grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
-                            gap: 22px;
-                            padding: 24px;
+                            gap: 18px;
+                            padding: 18px;
                             align-items: stretch;
                         }
 
                         .hero,
                         .panel {
-                            border-radius: 34px;
+                            border-radius: 30px;
                             overflow: hidden;
                             box-shadow: var(--shadow);
                         }
@@ -125,10 +125,10 @@ public class LoginController {
                             position: relative;
                             display: grid;
                             align-content: space-between;
-                            gap: 24px;
-                            padding: 34px;
+                            gap: 18px;
+                            padding: 28px;
                             background:
-                                linear-gradient(135deg, var(--primary-deep), var(--primary) 64%%, oklch(0.55 0.12 220) 100%%);
+                                linear-gradient(135deg, var(--primary-deep), var(--primary) 62%%, var(--accent) 100%%);
                             color: oklch(0.975 0.007 95);
                         }
 
@@ -154,38 +154,38 @@ public class LoginController {
                         }
 
                         h1 {
-                            margin: 16px 0 0;
+                            margin: 12px 0 0;
                             max-width: 10ch;
-                            font: 700 clamp(2.4rem, 4.5vw, 4.6rem)/1.02 "Lexend", sans-serif;
+                            font: 700 clamp(2.15rem, 4vw, 3.8rem)/1.02 "Lexend", sans-serif;
                         }
 
                         .hero p {
-                            margin: 16px 0 0;
-                            max-width: 58ch;
+                            margin: 12px 0 0;
+                            max-width: 54ch;
                             color: rgba(241, 246, 255, .82);
-                            line-height: 1.82;
-                            font-size: 1.02rem;
+                            line-height: 1.68;
+                            font-size: 0.96rem;
                         }
 
                         .hero-grid {
                             display: grid;
                             grid-template-columns: repeat(3, minmax(0, 1fr));
-                            gap: 12px;
+                            gap: 10px;
                         }
 
                         .hero-card {
                             position: relative;
                             z-index: 1;
-                            padding: 16px;
-                            border-radius: 24px;
+                            padding: 14px;
+                            border-radius: 20px;
                             background: rgba(248, 251, 255, 0.08);
                             border: 1px solid rgba(248, 251, 255, 0.16);
                         }
 
                         .hero-card strong {
                             display: block;
-                            font: 700 1.2rem/1.2 "Lexend", sans-serif;
-                            margin-top: 10px;
+                            font: 700 1.08rem/1.2 "Lexend", sans-serif;
+                            margin-top: 8px;
                         }
 
                         .hero-card span {
@@ -196,26 +196,26 @@ public class LoginController {
                         }
 
                         .panel {
-                            padding: 30px;
+                            padding: 24px;
                             background: var(--surface);
                             border: 1px solid rgba(71, 85, 105, 0.12);
                         }
 
                         .panel h2 {
                             margin: 0;
-                            font: 700 2rem/1.08 "Lexend", sans-serif;
+                            font: 700 1.76rem/1.08 "Lexend", sans-serif;
                         }
 
                         .panel p {
-                            margin: 10px 0 0;
+                            margin: 8px 0 0;
                             color: var(--ink-soft);
-                            line-height: 1.72;
+                            line-height: 1.64;
                         }
 
                         .stack {
                             display: grid;
-                            gap: 16px;
-                            margin-top: 22px;
+                            gap: 14px;
+                            margin-top: 18px;
                         }
 
                         .field {
@@ -231,9 +231,9 @@ public class LoginController {
 
                         .input {
                             width: 100%%;
-                            min-height: 50px;
-                            padding: 12px 14px;
-                            border-radius: 18px;
+                            min-height: 46px;
+                            padding: 11px 12px;
+                            border-radius: 16px;
                             border: 1px solid rgba(71, 85, 105, 0.16);
                             background: rgba(255, 255, 255, 0.92);
                             color: var(--ink);
@@ -248,7 +248,7 @@ public class LoginController {
                             display: inline-flex;
                             align-items: center;
                             justify-content: center;
-                            min-height: 48px;
+                            min-height: 44px;
                             padding: 0 18px;
                             border-radius: 999px;
                             border: 1px solid transparent;
@@ -278,39 +278,11 @@ public class LoginController {
                             color: oklch(0.42 0.14 28);
                         }
 
-                        .credential-grid {
-                            display: grid;
-                            grid-template-columns: repeat(3, minmax(0, 1fr));
-                            gap: 12px;
-                        }
-
-                        .credential-card {
-                            padding: 16px;
-                            border-radius: 22px;
-                            background: color-mix(in oklch, var(--surface-strong) 92%%, white);
-                            border: 1px solid rgba(71, 85, 105, 0.1);
-                        }
-
-                        .credential-card strong {
-                            display: block;
-                            font: 700 1rem/1.3 "Lexend", sans-serif;
-                            margin-bottom: 8px;
-                        }
-
-                        .credential-card code {
-                            display: inline-block;
-                            padding: 6px 10px;
-                            margin-top: 8px;
-                            border-radius: 999px;
-                            background: color-mix(in oklch, var(--primary) 10%%, white);
-                            color: var(--primary-deep);
-                        }
-
                         .footer-links {
                             display: flex;
                             flex-wrap: wrap;
                             gap: 12px;
-                            margin-top: 8px;
+                            margin-top: 2px;
                         }
 
                         .footer-links a {
@@ -320,14 +292,13 @@ public class LoginController {
 
                         @media (max-width: 1080px) {
                             .shell { grid-template-columns: 1fr; }
-                            .hero-grid,
-                            .credential-grid { grid-template-columns: 1fr; }
+                            .hero-grid { grid-template-columns: 1fr; }
                         }
 
                         @media (max-width: 720px) {
                             .shell { padding: 14px; }
                             .hero,
-                            .panel { padding: 22px; border-radius: 24px; }
+                            .panel { padding: 18px; border-radius: 22px; }
                             .btn { width: 100%%; }
                         }
                     </style>
@@ -358,7 +329,7 @@ public class LoginController {
                     <section class="panel">
                         <div>
                             <h2>登录并继续授权流程</h2>
-                            <p>登录后会根据账号状态自动进入 MFA 绑定页或动态码输入页。该页面也可用于答辩时演示统一身份入口与默认演示账号。</p>
+                            <p>登录后会根据账号状态自动进入 MFA 绑定页或动态码输入页，用于完成统一身份中心的二次认证并恢复原始授权流程。</p>
                         </div>
                         <div class="stack">
                             %s
@@ -374,26 +345,6 @@ public class LoginController {
                                 </div>
                                 <button class="btn" type="submit">进入 IAM 并继续认证</button>
                             </form>
-                            <div class="stack">
-                                <div class="helper-title">默认演示账号</div>
-                                <div class="credential-grid">
-                                    <article class="credential-card">
-                                        <strong>管理员</strong>
-                                        <div>admin</div>
-                                        <code>Admin#2026!Secure</code>
-                                    </article>
-                                    <article class="credential-card">
-                                        <strong>研发用户</strong>
-                                        <div>alice</div>
-                                        <code>Alice#2026!Secure</code>
-                                    </article>
-                                    <article class="credential-card">
-                                        <strong>审计用户</strong>
-                                        <div>bob</div>
-                                        <code>Bob#2026!Audit</code>
-                                    </article>
-                                </div>
-                            </div>
                             <div class="footer-links">
                                 <a href="http://127.0.0.1:8081/">查看 Demo App A</a>
                                 <a href="http://127.0.0.1:8082/">查看 Demo App B</a>

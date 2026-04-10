@@ -62,10 +62,12 @@ public class MfaController {
                         <p>输入认证器当前显示的 6 位动态码，系统会立即完成绑定并继续授权。</p>
                     </article>
                 </div>
+                """.formatted(escapeHtml(user.getUsername())),
+                """
                 <div class="qr-panel">
                     <img alt="TOTP QR" src="data:image/png;base64,%s">
                 </div>
-                """.formatted(escapeHtml(user.getUsername()), qrBase64),
+                """.formatted(qrBase64),
                 "/mfa/setup",
                 "完成绑定并继续登录"
         );
@@ -116,6 +118,7 @@ public class MfaController {
                     </article>
                 </div>
                 """.formatted(escapeHtml(user.getUsername())),
+                "",
                 "/mfa/verify",
                 "验证并继续登录"
         );
@@ -126,13 +129,13 @@ public class MfaController {
         HttpSession session = servletRequest.getSession(false);
         User user = pendingUser(session);
         if (!totpService.verifyCode(user.getTotpSecret(), request.code())) {
-            writeBadRequest(servletResponse, "动态码错误。若你最近执行过演示账号重置，请先重新扫码绑定 Google Authenticator。");
+            writeBadRequest(servletResponse, "动态码错误，请确认验证码仍在有效时间窗口内；必要时重新扫码绑定。");
             return;
         }
         writeSuccessRedirect(session, servletRequest, servletResponse);
     }
 
-    private String renderMfaPage(String title, String eyebrow, String headline, String intro, String leadContent, String submitPath, String buttonText) {
+    private String renderMfaPage(String title, String eyebrow, String headline, String intro, String leadContent, String formLeadContent, String submitPath, String buttonText) {
         return """
                 <!DOCTYPE html>
                 <html lang="zh-CN">
@@ -151,11 +154,11 @@ public class MfaController {
                             --line: oklch(0.892 0.014 234);
                             --ink: oklch(0.2 0.03 255);
                             --ink-soft: oklch(0.45 0.02 245);
-                            --primary: oklch(0.48 0.11 240);
-                            --primary-deep: oklch(0.28 0.05 248);
-                            --accent: oklch(0.74 0.1 84);
+                            --primary: oklch(0.56 0.13 252);
+                            --primary-deep: oklch(0.33 0.08 255);
+                            --accent: oklch(0.72 0.13 52);
                             --danger: oklch(0.58 0.17 28);
-                            --shadow: 0 30px 90px rgba(15, 23, 42, 0.1);
+                            --shadow: 0 24px 72px rgba(15, 23, 42, 0.1);
                         }
 
                         * { box-sizing: border-box; }
@@ -166,8 +169,8 @@ public class MfaController {
                             font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
                             color: var(--ink);
                             background:
-                                radial-gradient(circle at 10%% 10%%, oklch(0.93 0.04 235 / 0.75), transparent 24%%),
-                                radial-gradient(circle at 88%% 12%%, oklch(0.95 0.06 84 / 0.32), transparent 18%%),
+                                radial-gradient(circle at 10%% 10%%, oklch(0.93 0.05 250 / 0.72), transparent 24%%),
+                                radial-gradient(circle at 88%% 12%%, oklch(0.92 0.08 52 / 0.26), transparent 18%%),
                                 linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
                         }
 
@@ -186,30 +189,30 @@ public class MfaController {
                         .shell {
                             position: relative;
                             z-index: 1;
-                            max-width: 1220px;
+                            max-width: 1040px;
                             margin: 0 auto;
                             min-height: 100vh;
                             display: grid;
                             grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
-                            gap: 22px;
-                            padding: 24px;
-                            align-items: stretch;
+                            gap: 14px;
+                            padding: 14px;
+                            align-items: center;
                         }
 
                         .hero,
                         .panel {
-                            border-radius: 34px;
+                            border-radius: 30px;
                             overflow: hidden;
                             box-shadow: var(--shadow);
                         }
 
                         .hero {
                             position: relative;
-                            padding: 34px;
+                            padding: 22px;
                             display: grid;
-                            gap: 22px;
+                            gap: 14px;
                             align-content: start;
-                            background: linear-gradient(135deg, var(--primary-deep), var(--primary) 64%%, oklch(0.55 0.12 220) 100%%);
+                            background: linear-gradient(135deg, var(--primary-deep), var(--primary) 62%%, var(--accent) 100%%);
                             color: oklch(0.975 0.007 95);
                         }
 
@@ -238,20 +241,21 @@ public class MfaController {
                         h1 {
                             margin: 0;
                             max-width: 12ch;
-                            font: 700 clamp(2.2rem, 4.4vw, 4rem)/1.02 "Lexend", sans-serif;
+                            font: 700 clamp(1.9rem, 3.5vw, 3rem)/1.02 "Lexend", sans-serif;
                         }
 
                         .hero p {
                             margin: 0;
-                            max-width: 58ch;
+                            max-width: 48ch;
                             color: rgba(241, 246, 255, .82);
-                            line-height: 1.82;
+                            line-height: 1.58;
+                            font-size: 0.95rem;
                         }
 
                         .info-strip,
                         .step-grid {
                             display: grid;
-                            gap: 12px;
+                            gap: 8px;
                         }
 
                         .info-strip {
@@ -262,8 +266,8 @@ public class MfaController {
                         .step-card {
                             position: relative;
                             z-index: 1;
-                            padding: 16px;
-                            border-radius: 24px;
+                            padding: 12px;
+                            border-radius: 18px;
                             background: rgba(248, 251, 255, 0.08);
                             border: 1px solid rgba(248, 251, 255, 0.16);
                         }
@@ -279,8 +283,8 @@ public class MfaController {
 
                         .info-strip span {
                             display: block;
-                            margin-top: 8px;
-                            font: 700 1.05rem/1.4 "Lexend", sans-serif;
+                            margin-top: 4px;
+                            font: 700 0.98rem/1.4 "Lexend", sans-serif;
                         }
 
                         .step-grid {
@@ -289,51 +293,53 @@ public class MfaController {
 
                         .step-card strong {
                             display: block;
-                            margin: 10px 0 8px;
-                            font: 700 1rem/1.3 "Lexend", sans-serif;
+                            margin: 6px 0 4px;
+                            font: 700 0.96rem/1.3 "Lexend", sans-serif;
                         }
 
                         .step-card p {
                             margin: 0;
                             color: rgba(241, 246, 255, .78);
-                            line-height: 1.72;
+                            line-height: 1.54;
+                            font-size: 0.9rem;
                         }
 
                         .qr-panel {
                             display: grid;
                             place-items: center;
-                            padding: 18px;
-                            border-radius: 28px;
+                            padding: 12px;
+                            border-radius: 20px;
                             background: rgba(255,255,255,.92);
                         }
 
                         .qr-panel img {
-                            width: min(100%%, 320px);
-                            border-radius: 20px;
+                            width: min(100%%, 220px);
+                            border-radius: 14px;
                             border: 1px solid rgba(71, 85, 105, 0.12);
                         }
 
                         .panel {
-                            padding: 30px;
+                            padding: 20px;
                             background: var(--surface);
                             border: 1px solid rgba(71, 85, 105, 0.12);
                         }
 
                         .panel h2 {
                             margin: 0;
-                            font: 700 2rem/1.08 "Lexend", sans-serif;
+                            font: 700 1.52rem/1.08 "Lexend", sans-serif;
                         }
 
                         .panel p {
-                            margin: 10px 0 0;
+                            margin: 6px 0 0;
                             color: var(--ink-soft);
-                            line-height: 1.72;
+                            line-height: 1.56;
+                            font-size: 0.95rem;
                         }
 
                         .stack {
                             display: grid;
-                            gap: 16px;
-                            margin-top: 22px;
+                            gap: 10px;
+                            margin-top: 14px;
                         }
 
                         .field {
@@ -348,13 +354,13 @@ public class MfaController {
 
                         .input {
                             width: 100%%;
-                            min-height: 52px;
-                            padding: 12px 14px;
-                            border-radius: 18px;
+                            min-height: 44px;
+                            padding: 11px 12px;
+                            border-radius: 16px;
                             border: 1px solid rgba(71, 85, 105, 0.16);
                             background: rgba(255, 255, 255, 0.92);
                             color: var(--ink);
-                            font-size: 1.1rem;
+                            font-size: 1rem;
                             letter-spacing: .08em;
                         }
 
@@ -367,7 +373,7 @@ public class MfaController {
                             display: inline-flex;
                             align-items: center;
                             justify-content: center;
-                            min-height: 48px;
+                            min-height: 44px;
                             padding: 0 18px;
                             border-radius: 999px;
                             border: 1px solid transparent;
@@ -379,9 +385,9 @@ public class MfaController {
 
                         .notice {
                             display: none;
-                            padding: 14px 16px;
+                            padding: 12px 14px;
                             border-radius: 18px;
-                            line-height: 1.7;
+                            line-height: 1.6;
                             background: color-mix(in oklch, var(--danger) 12%%, white);
                             color: oklch(0.42 0.14 28);
                         }
@@ -391,12 +397,13 @@ public class MfaController {
                         }
 
                         .subtle {
-                            padding: 16px;
-                            border-radius: 22px;
+                            padding: 12px;
+                            border-radius: 16px;
                             background: color-mix(in oklch, var(--surface-strong) 92%%, white);
                             border: 1px solid rgba(71, 85, 105, 0.1);
                             color: var(--ink-soft);
-                            line-height: 1.72;
+                            line-height: 1.56;
+                            font-size: 0.92rem;
                         }
 
                         @media (max-width: 1080px) {
@@ -408,7 +415,7 @@ public class MfaController {
                         @media (max-width: 720px) {
                             .shell { padding: 14px; }
                             .hero,
-                            .panel { padding: 22px; border-radius: 24px; }
+                            .panel { padding: 18px; border-radius: 22px; }
                             .btn { width: 100%%; }
                         }
                     </style>
@@ -428,6 +435,7 @@ public class MfaController {
                         </div>
                         <div class="stack">
                             <div id="feedback" class="notice" role="alert"></div>
+                            %s
                             <div class="subtle">如果连续输入失败，请优先检查手机时间是否自动同步；若是首次绑定失败，可重新扫码后再次输入。</div>
                             <form class="stack" onsubmit="submitCode(event)">
                                 <div class="field">
@@ -461,7 +469,7 @@ public class MfaController {
                 </script>
                 </body>
                 </html>
-                """.formatted(title, eyebrow, headline, intro, leadContent, buttonText, submitPath);
+                """.formatted(title, eyebrow, headline, intro, leadContent, formLeadContent, buttonText, submitPath);
     }
 
     private void writeBadRequest(HttpServletResponse response, String message) throws IOException {
