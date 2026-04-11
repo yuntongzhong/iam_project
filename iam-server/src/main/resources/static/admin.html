@@ -93,6 +93,49 @@
             animation: rise 0.7s ease-out both;
         }
 
+        .flash-banner {
+            position: sticky;
+            top: 12px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .flash-banner.success {
+            border-color: color-mix(in oklch, var(--olive) 28%, white);
+            background: color-mix(in oklch, var(--olive) 10%, white);
+        }
+
+        .flash-banner.error {
+            border-color: color-mix(in oklch, var(--danger) 28%, white);
+            background: color-mix(in oklch, var(--danger) 10%, white);
+        }
+
+        .flash-copy {
+            display: grid;
+            gap: 2px;
+        }
+
+        .flash-title {
+            font-family: "Lexend", sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .flash-message {
+            color: var(--ink-soft);
+            line-height: 1.5;
+        }
+
         .hero {
             display: grid;
             gap: 20px;
@@ -187,6 +230,61 @@
             background: rgba(248, 251, 255, 0.09);
             border: 1px solid rgba(248, 251, 255, 0.16);
             backdrop-filter: blur(12px);
+        }
+
+        .session-compact {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.18);
+        }
+
+        .session-compact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .session-compact-title {
+            font: 700 0.98rem/1.2 "Lexend", sans-serif;
+        }
+
+        .session-compact-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .session-compact-item {
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .session-compact-item span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .session-compact-item strong {
+            display: block;
+            margin-top: 6px;
+            font-family: "Lexend", sans-serif;
+            font-size: 0.94rem;
+            word-break: break-word;
+        }
+
+        .menu-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .hero-side-title {
@@ -364,6 +462,16 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: var(--space-md);
+        }
+
+        .waterfall-grid {
+            columns: 280px 3;
+            column-gap: 16px;
+        }
+
+        .waterfall-grid > * {
+            break-inside: avoid;
+            margin: 0 0 16px;
         }
 
         .glossary-item {
@@ -783,6 +891,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .waterfall-grid {
+                columns: 1;
+            }
+
             .workspace-grid > .stack:last-child {
                 grid-template-columns: 1fr;
             }
@@ -835,6 +947,13 @@
 </head>
 <body>
 <div id="app" class="app-shell">
+    <div v-if="flash.show" class="flash-banner" :class="flash.tone" role="status" aria-live="polite">
+        <div class="flash-copy">
+            <div class="flash-title">{{ flash.tone === 'error' ? '操作失败' : '操作成功' }}</div>
+            <div class="flash-message">{{ flash.message }}</div>
+        </div>
+        <button class="btn btn-soft" @click="clearFlash">关闭</button>
+    </div>
     <section class="hero">
         <div class="hero-copy">
             <div class="eyebrow">Identity Governance Console</div>
@@ -850,6 +969,38 @@
             </div>
         </div>
         <aside class="hero-side">
+            <div class="session-compact" v-if="session">
+                <div class="session-compact-header">
+                    <div class="session-compact-title">当前登录用户</div>
+                    <span class="mini-tag">{{ session.title }}</span>
+                </div>
+                <div class="session-compact-meta">
+                    <div class="session-compact-item">
+                        <span>账号</span>
+                        <strong>{{ session.username }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>部门</span>
+                        <strong>{{ session.departmentName || '未分配' }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>角色数</span>
+                        <strong>{{ session.roles.length }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>权限数</span>
+                        <strong>{{ session.permissions.length }}</strong>
+                    </div>
+                </div>
+                <div class="menu-strip">
+                    <span class="chip" v-if="canViewUsers">用户目录</span>
+                    <span class="chip" v-if="canViewDepartments">部门拓扑</span>
+                    <span class="chip" v-if="canViewRoles">角色编排</span>
+                    <span class="chip" v-if="canViewPermissions">权限词典</span>
+                    <span class="chip" v-if="canViewApps">应用客户端</span>
+                    <span class="chip" v-if="canViewLogs">审计轨迹</span>
+                </div>
+            </div>
             <div>
                 <h2 class="hero-side-title">治理看板信号</h2>
                 <div class="signal-list">
@@ -874,7 +1025,7 @@
     </section>
 
     <section class="overview">
-        <article class="panel">
+        <article class="panel" v-if="canViewUsers">
             <div class="panel-header">
                 <div>
                     <h2 class="panel-title">治理总览</h2>
@@ -913,10 +1064,10 @@
                         <h2 class="panel-title">用户目录与生效权限</h2>
                         <p class="panel-desc">用户可直接绑定角色，也会从所在部门及祖先部门继承角色，因此列表里展示的是“最终生效”的角色与权限结果。</p>
                     </div>
-                    <button class="btn btn-soft" @click="resetUserForm">清空用户表单</button>
+                    <button v-if="canWriteUsers" class="btn btn-soft" @click="resetUserForm">清空用户表单</button>
                 </div>
 
-                <form class="form-grid" @submit.prevent="saveUser">
+                <form v-if="canWriteUsers" class="form-grid" @submit.prevent="saveUser">
                     <label class="field span-4">
                         <span>用户名</span>
                         <input class="input" v-model="forms.user.username" placeholder="例如：admin" required>
@@ -1002,10 +1153,10 @@
                             </td>
                             <td>
                                 <div class="record-actions table-actions">
-                                    <button class="btn btn-soft" @click="editUser(user)">编辑</button>
-                                    <button class="btn btn-soft" @click="changeUserStatus(user)">改状态</button>
-                                    <button class="btn btn-soft" @click="resetPassword(user)">重置密码</button>
-                                    <button class="btn btn-danger" @click="deleteUser(user.id)">删除</button>
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="editUser(user)">编辑</button>
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="changeUserStatus(user)">改状态</button>
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="resetPassword(user)">重置密码</button>
+                                    <button v-if="canWriteUsers" class="btn btn-danger" @click="deleteUser(user.id)">删除</button>
                                 </div>
                             </td>
                         </tr>
@@ -1016,7 +1167,7 @@
 
         <div class="workspace-grid">
         <div class="stack">
-            <article class="panel">
+            <article class="panel" v-if="canViewLogs">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">审计轨迹</h2>
@@ -1067,14 +1218,14 @@
         </div>
 
         <div class="stack">
-            <article class="panel">
+            <article class="panel" v-if="canViewDepartments">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">部门拓扑</h2>
                         <p class="panel-desc">部门不仅是组织结构，也能挂接角色，从而让下级用户继承治理能力。</p>
                     </div>
                 </div>
-                <form class="form-grid" @submit.prevent="saveDepartment">
+                <form v-if="canWriteDepartments" class="form-grid" @submit.prevent="saveDepartment">
                     <label class="field span-6">
                         <span>部门名称</span>
                         <input class="input" v-model="forms.department.name" placeholder="例如：研发中心" required>
@@ -1097,7 +1248,7 @@
                     </div>
                 </form>
 
-                <div class="records scroll-region compact" style="margin-top:20px;">
+                <div class="records scroll-region compact waterfall-grid" style="margin-top:20px;">
                     <article class="record" v-for="department in flatDepartments" :key="department.id">
                         <div class="record-main">
                             <div>
@@ -1105,8 +1256,8 @@
                                 <div class="record-subtitle">部门角色会被该部门及其子层级用户继承。</div>
                             </div>
                             <div class="record-actions">
-                                <button class="btn btn-soft" @click="editDepartment(department)">编辑</button>
-                                <button class="btn btn-danger" @click="deleteDepartment(department.id)">删除</button>
+                                <button v-if="canWriteDepartments" class="btn btn-soft" @click="editDepartment(department)">编辑</button>
+                                <button v-if="canWriteDepartments" class="btn btn-danger" @click="deleteDepartment(department.id)">删除</button>
                             </div>
                         </div>
                         <div class="chip-list">
@@ -1117,14 +1268,14 @@
                 </div>
             </article>
 
-            <article class="panel">
+            <article class="panel" v-if="canViewRoles">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">角色编排</h2>
                         <p class="panel-desc">角色是业务身份包，聚合多个权限。答辩时可用这一栏解释 RBAC 的“中间层”。</p>
                     </div>
                 </div>
-                <form class="form-grid" @submit.prevent="saveRole">
+                <form v-if="canWriteRoles" class="form-grid" @submit.prevent="saveRole">
                     <label class="field span-4">
                         <span>角色编码</span>
                         <input class="input" v-model="forms.role.code" placeholder="例如：ADMIN" required>
@@ -1149,7 +1300,7 @@
                     </div>
                 </form>
 
-                <div class="records" style="margin-top:20px;">
+                <div class="records waterfall-grid" style="margin-top:20px;">
                     <article class="record" v-for="role in pagedItems(roles, 'roles')" :key="role.id">
                         <div class="record-main">
                             <div>
@@ -1157,8 +1308,8 @@
                                 <div class="record-subtitle">{{ role.description || '未填写角色说明' }}</div>
                             </div>
                             <div class="record-actions">
-                                <button class="btn btn-soft" @click="editRole(role)">编辑</button>
-                                <button class="btn btn-danger" @click="deleteRole(role.id)">删除</button>
+                                <button v-if="canWriteRoles" class="btn btn-soft" @click="editRole(role)">编辑</button>
+                                <button v-if="canWriteRoles" class="btn btn-danger" @click="deleteRole(role.id)">删除</button>
                             </div>
                         </div>
                         <div class="chip-list">
@@ -1186,14 +1337,14 @@
                 </div>
             </article>
 
-            <article class="panel">
+            <article class="panel" v-if="canViewPermissions">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">权限词典</h2>
                         <p class="panel-desc">每个 Permission 都是最小授权颗粒。这里直接给出中文名称、用途和资源归属。</p>
                     </div>
                 </div>
-                <div class="section-grid scroll-region compact">
+                <div class="section-grid scroll-region compact waterfall-grid">
                     <article class="legend-card" v-for="permission in permissions" :key="permission.id">
                         <h4>{{ permission.code }}</h4>
                         <p>{{ permission.name }}{{ permission.description && permission.description !== permission.name ? '：' + permission.description : '' }}</p>
@@ -1206,14 +1357,14 @@
                 </div>
             </article>
 
-            <article class="panel">
+            <article class="panel" v-if="canViewApps">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">应用客户端注册</h2>
                         <p class="panel-desc">这里维护 OAuth2 客户端。重点信息包括回调地址、Scope、认证方式和是否强制 PKCE。</p>
                     </div>
                 </div>
-                <form class="form-grid" @submit.prevent="saveApp">
+                <form v-if="canWriteApps" class="form-grid" @submit.prevent="saveApp">
                     <label class="field span-6">
                         <span>Client ID</span>
                         <input class="input" v-model="forms.app.clientId" placeholder="app-a" required>
@@ -1266,8 +1417,8 @@
                                 <div class="record-subtitle">回调地址：{{ app.redirectUris.join('，') || '未配置' }}</div>
                             </div>
                             <div class="record-actions">
-                                <button class="btn btn-soft" @click="editApp(app)">编辑</button>
-                                <button class="btn btn-danger" @click="deleteApp(app.id)">删除</button>
+                                <button v-if="canWriteApps" class="btn btn-soft" @click="editApp(app)">编辑</button>
+                                <button v-if="canWriteApps" class="btn btn-danger" @click="deleteApp(app.id)">删除</button>
                             </div>
                         </div>
                         <div class="chip-list">
@@ -1378,7 +1529,13 @@ createApp({
                     authenticationMethodsText: 'client_secret_basic',
                     requireProofKey: true
                 }
-            }
+            },
+            flash: {
+                show: false,
+                tone: 'success',
+                message: ''
+            },
+            session: null
         };
     },
     computed: {
@@ -1406,6 +1563,36 @@ createApp({
                 { label: '审计记录', value: this.logs.length, note: '最近可见的操作与认证痕迹' },
                 { label: '锁定 / 禁用', value: this.users.filter(user => user.status !== 'ACTIVE').length, note: '可用来演示状态控制与风控' }
             ];
+        },
+        canViewUsers() {
+            return this.hasPermission('PERM_USER_READ') || this.hasRole('ADMIN');
+        },
+        canWriteUsers() {
+            return this.hasPermission('PERM_USER_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewDepartments() {
+            return this.hasPermission('PERM_DEPARTMENT_READ') || this.hasRole('ADMIN');
+        },
+        canWriteDepartments() {
+            return this.hasPermission('PERM_DEPARTMENT_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewRoles() {
+            return this.hasPermission('PERM_ROLE_READ') || this.hasRole('ADMIN');
+        },
+        canWriteRoles() {
+            return this.hasPermission('PERM_ROLE_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewPermissions() {
+            return this.canViewRoles;
+        },
+        canViewApps() {
+            return this.hasPermission('PERM_APP_READ') || this.hasRole('ADMIN');
+        },
+        canWriteApps() {
+            return this.hasPermission('PERM_APP_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewLogs() {
+            return this.hasPermission('PERM_AUDIT_READ') || this.hasRole('ADMIN');
         }
     },
     methods: {
@@ -1425,15 +1612,67 @@ createApp({
         parseList(text) {
             return (text || '').split(',').map(value => value.trim()).filter(Boolean);
         },
+        hasRole(roleCode) {
+            return Array.isArray(this.session?.roles) && this.session.roles.includes(roleCode);
+        },
+        hasPermission(permissionCode) {
+            return Array.isArray(this.session?.authorities) && this.session.authorities.includes(permissionCode);
+        },
+        async loadSession() {
+            this.session = await this.api('/api/session');
+        },
+        showFlash(message, tone = 'success') {
+            this.flash = { show: true, tone, message };
+        },
+        clearFlash() {
+            this.flash.show = false;
+        },
+        formatError(error, fallback) {
+            const rawMessage = error?.message?.trim();
+            if (!rawMessage) {
+                return fallback;
+            }
+            try {
+                const parsed = JSON.parse(rawMessage);
+                return parsed.message || fallback;
+            } catch (parseError) {
+                return rawMessage;
+            }
+        },
         async loadAll() {
-            await Promise.all([
-                this.loadUsers(),
-                this.loadDepartments(),
-                this.loadRoles(),
-                this.loadPermissions(),
-                this.loadApps(),
-                this.loadLogs()
-            ]);
+            if (!this.session) {
+                await this.loadSession();
+            }
+
+            const tasks = [];
+            if (this.canViewUsers) {
+                tasks.push(this.loadUsers());
+            } else {
+                this.users = [];
+            }
+            if (this.canViewDepartments) {
+                tasks.push(this.loadDepartments());
+            } else {
+                this.departments = [];
+            }
+            if (this.canViewRoles) {
+                tasks.push(this.loadRoles(), this.loadPermissions());
+            } else {
+                this.roles = [];
+                this.permissions = [];
+            }
+            if (this.canViewApps) {
+                tasks.push(this.loadApps());
+            } else {
+                this.apps = [];
+            }
+            if (this.canViewLogs) {
+                tasks.push(this.loadLogs());
+            } else {
+                this.logs = [];
+            }
+
+            await Promise.all(tasks);
         },
         async loadUsers() {
             this.users = await this.api('/api/users');
@@ -1537,38 +1776,58 @@ createApp({
         async saveUser() {
             const method = this.forms.user.id ? 'PUT' : 'POST';
             const path = this.forms.user.id ? `/api/users/${this.forms.user.id}` : '/api/users';
-            await this.api(path, { method, body: JSON.stringify(this.forms.user) });
-            this.resetUserForm();
-            await this.loadUsers();
-            await this.loadLogs();
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.user) });
+                this.resetUserForm();
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '用户已创建。' : '用户信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存用户失败，请检查输入后重试。'), 'error');
+            }
         },
         async deleteUser(id) {
             if (!confirm('确认删除该用户？')) {
                 return;
             }
-            await this.api(`/api/users/${id}`, { method: 'DELETE' });
-            await this.loadUsers();
-            await this.loadLogs();
+            try {
+                await this.api(`/api/users/${id}`, { method: 'DELETE' });
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash('用户已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除用户失败。'), 'error');
+            }
         },
         async changeUserStatus(user) {
             const status = prompt('输入新的状态：ACTIVE / DISABLED / LOCKED', user.status);
             if (!status) {
                 return;
             }
-            await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' });
-            await this.loadUsers();
-            await this.loadLogs();
+            try {
+                await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' });
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash(`用户状态已更新为 ${status}。`);
+            } catch (error) {
+                this.showFlash(this.formatError(error, '更新用户状态失败。'), 'error');
+            }
         },
         async resetPassword(user) {
             const newPassword = prompt(`给 ${user.username} 设置新密码`, 'Reset#2026!Temp');
             if (!newPassword) {
                 return;
             }
-            await this.api(`/api/users/${user.id}/password`, {
-                method: 'PATCH',
-                body: JSON.stringify({ newPassword })
-            });
-            await this.loadLogs();
+            try {
+                await this.api(`/api/users/${user.id}/password`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ newPassword })
+                });
+                await this.loadLogs();
+                this.showFlash(`已重置 ${user.username} 的密码。`);
+            } catch (error) {
+                this.showFlash(this.formatError(error, '重置密码失败。'), 'error');
+            }
         },
         editDepartment(item) {
             this.forms.department = {
@@ -1581,18 +1840,28 @@ createApp({
         async saveDepartment() {
             const method = this.forms.department.id ? 'PUT' : 'POST';
             const path = this.forms.department.id ? `/api/departments/${this.forms.department.id}` : '/api/departments';
-            await this.api(path, { method, body: JSON.stringify(this.forms.department) });
-            this.forms.department = { id: null, name: '', parentId: null, roleIds: [] };
-            await this.loadDepartments();
-            await this.loadLogs();
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.department) });
+                this.forms.department = { id: null, name: '', parentId: null, roleIds: [] };
+                await this.loadDepartments();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '部门已创建。' : '部门信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存部门失败。'), 'error');
+            }
         },
         async deleteDepartment(id) {
             if (!confirm('确认删除该部门？')) {
                 return;
             }
-            await this.api(`/api/departments/${id}`, { method: 'DELETE' });
-            await this.loadDepartments();
-            await this.loadLogs();
+            try {
+                await this.api(`/api/departments/${id}`, { method: 'DELETE' });
+                await this.loadDepartments();
+                await this.loadLogs();
+                this.showFlash('部门已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除部门失败。'), 'error');
+            }
         },
         editRole(role) {
             this.forms.role = {
@@ -1606,18 +1875,28 @@ createApp({
         async saveRole() {
             const method = this.forms.role.id ? 'PUT' : 'POST';
             const path = this.forms.role.id ? `/api/roles/${this.forms.role.id}` : '/api/roles';
-            await this.api(path, { method, body: JSON.stringify(this.forms.role) });
-            this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] };
-            await this.loadRoles();
-            await this.loadLogs();
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.role) });
+                this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] };
+                await this.loadRoles();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '角色已创建。' : '角色信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存角色失败。'), 'error');
+            }
         },
         async deleteRole(id) {
             if (!confirm('确认删除该角色？')) {
                 return;
             }
-            await this.api(`/api/roles/${id}`, { method: 'DELETE' });
-            await this.loadRoles();
-            await this.loadLogs();
+            try {
+                await this.api(`/api/roles/${id}`, { method: 'DELETE' });
+                await this.loadRoles();
+                await this.loadLogs();
+                this.showFlash('角色已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除角色失败。'), 'error');
+            }
         },
         editApp(app) {
             this.forms.app = {
@@ -1649,29 +1928,39 @@ createApp({
             };
             const method = this.forms.app.id ? 'PUT' : 'POST';
             const path = this.forms.app.id ? `/api/apps/${this.forms.app.id}` : '/api/apps';
-            await this.api(path, { method, body: JSON.stringify(payload) });
-            this.forms.app = {
-                id: null,
-                clientId: '',
-                clientName: '',
-                clientSecret: '',
-                redirectUrisText: '',
-                postLogoutRedirectUrisText: '',
-                scopesText: 'openid,profile',
-                grantTypesText: 'authorization_code,refresh_token',
-                authenticationMethodsText: 'client_secret_basic',
-                requireProofKey: true
-            };
-            await this.loadApps();
-            await this.loadLogs();
+            try {
+                await this.api(path, { method, body: JSON.stringify(payload) });
+                this.forms.app = {
+                    id: null,
+                    clientId: '',
+                    clientName: '',
+                    clientSecret: '',
+                    redirectUrisText: '',
+                    postLogoutRedirectUrisText: '',
+                    scopesText: 'openid,profile',
+                    grantTypesText: 'authorization_code,refresh_token',
+                    authenticationMethodsText: 'client_secret_basic',
+                    requireProofKey: true
+                };
+                await this.loadApps();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '客户端已创建。' : '客户端信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存客户端失败。'), 'error');
+            }
         },
         async deleteApp(id) {
             if (!confirm('确认删除该应用客户端？')) {
                 return;
             }
-            await this.api(`/api/apps/${id}`, { method: 'DELETE' });
-            await this.loadApps();
-            await this.loadLogs();
+            try {
+                await this.api(`/api/apps/${id}`, { method: 'DELETE' });
+                await this.loadApps();
+                await this.loadLogs();
+                this.showFlash('客户端已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除客户端失败。'), 'error');
+            }
         },
         formatTime(value) {
             return value ? new Date(value).toLocaleString('zh-CN') : '-';
@@ -1681,7 +1970,7 @@ createApp({
         try {
             await this.loadAll();
         } catch (error) {
-            alert(error.message);
+            this.showFlash(this.formatError(error, '加载管理台数据失败。'), 'error');
         }
     }
 }).mount('#app');

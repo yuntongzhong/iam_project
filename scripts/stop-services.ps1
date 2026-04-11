@@ -50,6 +50,24 @@ function Remove-StalePidFile {
     }
 }
 
+function Stop-ManagedMySql {
+    $pidFile = Get-ManagedMySqlPidFilePath
+    if (-not (Test-Path $pidFile)) {
+        return
+    }
+
+    $pidValue = Get-Content $pidFile | Select-Object -First 1
+    if ($pidValue -match '^[1-9]\d*$') {
+        $process = Get-Process -Id ([int]$pidValue) -ErrorAction SilentlyContinue
+        if ($process) {
+            Stop-Process -Id $process.Id -Force
+            Write-Host "Stopped managed MySQL, PID=$($process.Id)"
+        }
+    }
+
+    Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+}
+
 foreach ($app in Get-AppConfig) {
     Stop-ByPidFile -App $app
     Start-Sleep -Milliseconds 300
@@ -57,6 +75,8 @@ foreach ($app in Get-AppConfig) {
     Start-Sleep -Milliseconds 300
     Remove-StalePidFile -App $app
 }
+
+Stop-ManagedMySql
 
 Write-Host ""
 Write-Host "All services stopped."

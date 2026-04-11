@@ -157,6 +157,66 @@
             font-size: 1.2rem;
         }
 
+        .session-compact {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, rgba(255, 252, 247, 0.92) 86%, white);
+            border: 1px solid rgba(255, 250, 243, 0.18);
+            color: var(--ink);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
+        }
+
+        .session-compact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .session-compact-title {
+            margin: 0;
+            font: 700 1rem/1.2 "Lexend", sans-serif;
+        }
+
+        .session-compact-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 12%, white);
+            color: var(--teal-deep);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .04em;
+        }
+
+        .session-compact-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .session-compact-item {
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            border: 1px solid rgba(134, 100, 61, 0.1);
+        }
+
+        .session-compact-item span {
+            display: block;
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+
+        .session-compact-item strong {
+            display: block;
+            margin-top: 6px;
+            font: 700 1rem/1.35 "Lexend", sans-serif;
+            word-break: break-word;
+        }
+
         .signal {
             padding-bottom: 12px;
             border-bottom: 1px solid rgba(255, 250, 243, 0.12);
@@ -434,6 +494,34 @@
             </div>
         </div>
         <aside class="hero-side">
+            <div class="session-compact">
+                <div class="session-compact-header">
+                    <h2 class="session-compact-title">当前登录会话</h2>
+                    <span class="session-compact-badge" id="appName">-</span>
+                </div>
+                <div class="session-compact-meta">
+                    <div class="session-compact-item">
+                        <span>用户名</span>
+                        <strong id="username">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>邮箱</span>
+                        <strong id="email">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>角色数</span>
+                        <strong id="roleCount">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>权限数</span>
+                        <strong id="permissionCount">-</strong>
+                    </div>
+                    <div class="session-compact-item" style="grid-column: 1 / -1;">
+                        <span>会话有效至</span>
+                        <strong id="expiresAt">-</strong>
+                    </div>
+                </div>
+            </div>
             <h2>本页讲解重点</h2>
             <div class="signal-list">
                 <div class="signal">
@@ -455,25 +543,6 @@
     <div id="error" class="error"></div>
 
     <section class="layout">
-        <article class="panel">
-            <div class="panel-head">
-                <div>
-                    <h2>当前会话摘要</h2>
-                    <p>先用一屏把登录态和令牌上下文看清楚，后面再展开解释每种身份信息各自承担什么语义。</p>
-                </div>
-            </div>
-            <div class="summary-grid">
-                <div class="summary-card"><div class="label">用户名</div><div class="value" id="username">-</div><div class="note">IAM 返回的首选用户名</div></div>
-                <div class="summary-card"><div class="label">Subject</div><div class="value" id="subject">-</div><div class="note">OIDC 主体唯一标识</div></div>
-                <div class="summary-card"><div class="label">邮箱</div><div class="value" id="email">-</div><div class="note">身份基础属性</div></div>
-                <div class="summary-card"><div class="label">签发时间</div><div class="value" id="issuedAt">-</div><div class="note">会话进入客户端的时间点</div></div>
-                <div class="summary-card"><div class="label">ID Token 过期</div><div class="value" id="expiresAt">-</div><div class="note">用于说明登录态生命周期</div></div>
-                <div class="summary-card"><div class="label">Authority 数量</div><div class="value" id="authorityCount">-</div><div class="note">Spring Security 最终拿来判权的授权串数量</div></div>
-                <div class="summary-card"><div class="label">Claims 数量</div><div class="value" id="claimCount">-</div><div class="note">OIDC 用户对象可读取到的上下文字段数</div></div>
-                <div class="summary-card"><div class="label">客户端</div><div class="value" id="appName">-</div><div class="note">当前展示的是首个接入方</div></div>
-            </div>
-        </article>
-
         <article class="panel">
             <div class="panel-head">
                 <div>
@@ -707,12 +776,10 @@ async function loadSession() {
         const session = await response.json();
         setText('appName', session.title);
         setText('username', session.username);
-        setText('subject', session.subject);
         setText('email', session.email);
-        setText('issuedAt', formatTime(session.issuedAt));
         setText('expiresAt', formatTime(session.expiresAt));
-        setText('authorityCount', Array.isArray(session.authorities) ? session.authorities.length : 0);
-        setText('claimCount', session.claims ? Object.keys(session.claims).length : 0);
+        setText('roleCount', Array.isArray(session.roles) ? session.roles.length : 0);
+        setText('permissionCount', Array.isArray(session.permissions) ? session.permissions.length : 0);
         renderExplainList('roles', session.roles, roleMeaning, 'base');
         renderExplainList('permissions', session.permissions, permissionMeaning, 'alt');
         renderExplainList('authorities', session.authorities, authorityMeaning, 'alt');

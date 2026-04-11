@@ -14,8 +14,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
-import org.springframework.security.web.savedrequest.SavedRequest;
-import org.springframework.security.web.util.UrlUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -26,6 +24,7 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private final UserRepository userRepository;
     private final TotpService totpService;
+    private final PostMfaRedirectResolver postMfaRedirectResolver;
     private final RedirectStrategy redirectStrategy = (request, response, url) -> response.sendRedirect(url);
     private final RequestCache requestCache = new HttpSessionRequestCache();
 
@@ -39,10 +38,7 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
             userRepository.save(user);
         }
 
-        SavedRequest savedRequest = requestCache.getRequest(request, response);
-        String targetUrl = savedRequest != null && UrlUtils.isValidRedirectUrl(savedRequest.getRedirectUrl())
-                ? savedRequest.getRedirectUrl()
-                : "/admin.html";
+        String targetUrl = postMfaRedirectResolver.resolve(request, requestCache);
 
         HttpSession session = request.getSession(true);
         session.setAttribute(MfaSessionKeys.PENDING_AUTHENTICATION, authentication);

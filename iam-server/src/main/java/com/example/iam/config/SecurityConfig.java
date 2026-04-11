@@ -1,6 +1,7 @@
 package com.example.iam.config;
 
 import com.example.iam.security.MfaAuthenticationSuccessHandler;
+import com.example.iam.security.FriendlyAccessDeniedHandler;
 import com.example.iam.security.MfaPendingRedirectFilter;
 import com.example.iam.service.CustomUserDetailsService;
 import com.example.iam.service.UserClaimsService;
@@ -59,6 +60,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final MfaAuthenticationSuccessHandler mfaAuthenticationSuccessHandler;
     private final MfaPendingRedirectFilter mfaPendingRedirectFilter;
+    private final FriendlyAccessDeniedHandler friendlyAccessDeniedHandler;
     private final UserClaimsService userClaimsService;
     private final AppSecurityProperties appSecurityProperties;
     private final SingleLogoutController singleLogoutController;
@@ -74,7 +76,7 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"),
                         new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                ))
+                ).accessDeniedHandler(friendlyAccessDeniedHandler))
                 .csrf(csrf -> csrf.ignoringRequestMatchers(authorizationServerConfigurer.getEndpointsMatcher()))
                 .addFilterBefore(mfaPendingRedirectFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -85,6 +87,14 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/", "/admin.html").hasAnyAuthority(
+                                "PERM_USER_READ",
+                                "PERM_DEPARTMENT_READ",
+                                "PERM_ROLE_READ",
+                                "PERM_APP_READ",
+                                "PERM_AUDIT_READ"
+                        )
+                        .requestMatchers("/api/session").authenticated()
                         .requestMatchers("/mfa/**", "/error", "/slo/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
@@ -99,6 +109,7 @@ public class SecurityConfig {
                                         singleLogoutController.resolvePostLogoutRedirect(request.getParameter("post_logout_redirect_uri")),
                                         StandardCharsets.UTF_8))))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/mfa/**"))
+                .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(friendlyAccessDeniedHandler))
                 .addFilterBefore(mfaPendingRedirectFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -17,6 +17,7 @@
 
 1. 确认 MySQL 服务已启动，并已创建数据库 `iam_platform`
 2. 在 Win11 下直接运行一键脚本：
+   - 打包: [package.cmd](/D:/codex/iam_project/scripts/package.cmd)
    - 启动: [start-services.cmd](/D:/codex/iam_project/scripts/start-services.cmd)
    - 状态: [status-services.cmd](/D:/codex/iam_project/scripts/status-services.cmd)
    - 恢复演示账号: [reset-demo-accounts.cmd](/D:/codex/iam_project/scripts/reset-demo-accounts.cmd)
@@ -24,6 +25,7 @@
 3. 或者在 PowerShell 7 中执行：
 
 ```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\package.ps1
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-services.ps1
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\status-services.ps1 -Detailed
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\reset-demo-accounts.ps1
@@ -51,6 +53,7 @@ $env:IAM_DB_PASSWORD="zyt@360728"
 - `.cmd` 包装器会透传参数，可直接执行 `status-services.cmd -Detailed`
 - `reset-demo-accounts` 会把 `admin`、`alice`、`bob` 恢复到默认密码、`ACTIVE` 状态、失败次数清零，并清空 TOTP 绑定
 - 如 Jar 不存在，会自动执行 `.\gradlew.bat build`
+- 也可以直接执行 `scripts\package.cmd` 一键重新打包
 - 运行日志输出到 [/.runtime/logs](/D:/codex/iam_project/.runtime/logs)，每个服务一个 `.log`
 - PID 文件输出到 [/.runtime/pids](/D:/codex/iam_project/.runtime/pids)，记录的是实际监听端口的 Java 进程 PID
 

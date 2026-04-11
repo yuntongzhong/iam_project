@@ -10,6 +10,8 @@ $ErrorActionPreference = "Stop"
 
 $paths = Get-PlatformPaths
 Ensure-RuntimeDirs
+$javaInfo = Initialize-JavaEnvironment -MinimumMajorVersion 17
+Ensure-MySqlReady -DbUrl $DbUrl
 
 function Ensure-BuildArtifacts {
     if ($SkipBuild) {
@@ -52,6 +54,9 @@ function Ensure-BuildArtifacts {
         Push-Location $paths.RepoRoot
         try {
             & .\gradlew.bat build
+            if ($LASTEXITCODE -ne 0) {
+                throw "Gradle build failed with exit code $LASTEXITCODE"
+            }
         } finally {
             Pop-Location
         }
@@ -82,7 +87,7 @@ function Start-App {
     }
     $args += $App.ExtraArgs
 
-    $process = Start-Process -FilePath "java" `
+    $process = Start-Process -FilePath $javaInfo.JavaExecutable `
         -ArgumentList $args `
         -WorkingDirectory $paths.RepoRoot `
         -PassThru
@@ -99,6 +104,8 @@ foreach ($app in Get-AppConfig) {
 
 Start-Sleep -Seconds 3
 
+$hadStartupFailure = $false
+
 foreach ($app in Get-AppConfig) {
     $ready = $false
     for ($i = 0; $i -lt 20; $i++) {
@@ -113,7 +120,34 @@ foreach ($app in Get-AppConfig) {
         Update-PidFileFromPort -App $app
         $status = "RUNNING"
     } else {
-        $status = "NOT_READY"
+        $pidFile = Get-PidFilePath -AppName $app.Name
+        $pidValue = $null
+        if (Test-Path $pidFile) {
+            $rawPidValue = Get-Content $pidFile | Select-Object -First 1
+            if ($rawPidValue -match '^[1-9]\d*$') {
+                $pidValue = [int]$rawPidValue
+            }
+        }
+
+        $processAlive = $false
+        if ($pidValue) {
+            $processAlive = $null -ne (Get-Process -Id $pidValue -ErrorAction SilentlyContinue)
+        }
+
+        if ($processAlive) {
+            $status = "NOT_READY"
+        } else {
+            $status = "FAILED"
+            Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+            $hadStartupFailure = $true
+
+            if (Test-Path $app.LogFile) {
+                $lastLogLine = Get-Content -LiteralPath $app.LogFile -Tail 1 -ErrorAction SilentlyContinue
+                if ($lastLogLine) {
+                    Write-Host "  Last log for $($app.Name): $lastLogLine"
+                }
+            }
+        }
     }
     Write-Host ("- {0}: {1} (http://127.0.0.1:{2})" -f $app.Name, $status, $app.Port)
 }
@@ -121,3 +155,7 @@ foreach ($app in Get-AppConfig) {
 Write-Host ""
 Write-Host "Detailed status:"
 Show-ServiceStatus -Detailed
+
+if ($hadStartupFailure) {
+    throw "One or more services failed to start. Check logs in $($paths.LogsDir)"
+}
