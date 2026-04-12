@@ -1,0 +1,7 @@
+username,email,phone,departmentPath,roleCodes,status,password
+bad.missing.password,bad.missing.password@example.com,13800007771,"总部/研发中心","ENGINEER",ACTIVE,
+bad.unknown.department,bad.unknown.department@example.com,13800007772,"总部/不存在部门","ENGINEER",ACTIVE,Import#2026!Bad1
+bad.unknown.role,bad.unknown.role@example.com,13800007773,"总部/研发中心","NO_SUCH_ROLE",ACTIVE,Import#2026!Bad2
+bad.invalid.status,bad.invalid.status@example.com,13800007774,"总部/销售中心","AUDITOR",LOCKED,Import#2026!Bad3
+bad.duplicate.username,bad.duplicate.username.one@example.com,13800007775,"运营","ENGINEER",ACTIVE,Import#2026!Bad4
+bad.duplicate.username,bad.duplicate.username.two@example.com,13800007776,"运营","ENGINEER",ACTIVE,Import#2026!Bad5

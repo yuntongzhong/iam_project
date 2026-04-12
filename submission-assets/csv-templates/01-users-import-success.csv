@@ -1,0 +1,4 @@
+username,email,phone,departmentPath,roleCodes,status,password
+demo.import.a,demo.import.a@example.com,13800006661,"总部/研发中心","ENGINEER",ACTIVE,Import#2026!DemoA
+demo.import.b,demo.import.b@example.com,13800006662,"总部/销售中心","AUDITOR",DISABLED,Import#2026!DemoB
+demo.import.c,demo.import.c@example.com,13800006663,"运营","ENGINEER",ACTIVE,Import#2026!DemoC

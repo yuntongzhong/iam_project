@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAM 治理控制台</title>
+    <meta name="description" content="IAM 治理控制台，用于演示用户、角色、权限、部门、应用接入和审计轨迹的完整治理关系。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <style>
+        :root {
+            --bg: oklch(0.985 0.004 240);
+            --bg-strong: oklch(0.952 0.01 235);
+            --surface: oklch(0.998 0.002 240 / 0.94);
+            --surface-strong: oklch(0.972 0.008 232);
+            --line: oklch(0.89 0.014 234);
+            --line-strong: oklch(0.72 0.04 245);
+            --ink: oklch(0.2 0.03 255);
+            --ink-soft: oklch(0.45 0.02 245);
+            --teal: oklch(0.5 0.11 240);
+            --teal-deep: oklch(0.3 0.07 246);
+            --clay: oklch(0.72 0.11 85);
+            --olive: oklch(0.62 0.074 132);
+            --danger: oklch(0.58 0.17 28);
+            --disabled: oklch(0.58 0.02 260);
+            --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 20px;
+            --space-2xl: 28px;
+            --space-3xl: 48px;
+            --radius-sm: 14px;
+            --radius-md: 22px;
+            --radius-lg: 30px;
+            --radius-xl: 38px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            color-scheme: light;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, oklch(0.93 0.04 235 / 0.7), transparent 28%),
+                radial-gradient(circle at 92% 8%, oklch(0.95 0.06 84 / 0.34), transparent 20%),
+                linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.055) calc(100% - 1px)),
+                linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.05) calc(100% - 1px));
+            background-size: 88px 88px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 76%);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        .app-shell {
+            max-width: 1540px;
+            margin: 0 auto;
+            padding: 24px 18px 44px;
+        }
+
+        .hero,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            animation: rise 0.7s ease-out both;
+        }
+
+        .flash-banner {
+            position: sticky;
+            top: 12px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .flash-banner.success {
+            border-color: color-mix(in oklch, var(--olive) 28%, white);
+            background: color-mix(in oklch, var(--olive) 10%, white);
+        }
+
+        .flash-banner.error {
+            border-color: color-mix(in oklch, var(--danger) 28%, white);
+            background: color-mix(in oklch, var(--danger) 10%, white);
+        }
+
+        .flash-copy {
+            display: grid;
+            gap: 2px;
+        }
+
+        .flash-title {
+            font-family: "Lexend", sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .flash-message {
+            color: var(--ink-soft);
+            line-height: 1.5;
+        }
+
+        .hero {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+            padding: clamp(22px, 2.8vw, 34px);
+            border-radius: var(--radius-xl);
+            background:
+                linear-gradient(135deg, oklch(0.31 0.08 255), oklch(0.48 0.12 255) 58%, oklch(0.72 0.13 52) 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
+            color: oklch(0.975 0.007 95);
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -8% -30% auto;
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 62%);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: var(--space-lg);
+            align-content: start;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            width: fit-content;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            font-family: "Lexend", sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin: 0;
+            max-width: 12ch;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(2.2rem, 3.4vw, 4.35rem);
+            line-height: 1.06;
+            letter-spacing: 0.01em;
+        }
+
+        .hero-lead {
+            max-width: 58ch;
+            margin: 0;
+            color: rgba(242, 246, 255, 0.82);
+            font-size: 0.97rem;
+            line-height: 1.72;
+        }
+
+        .hero-proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            max-width: 920px;
+        }
+
+        .hero-proof-card {
+            position: relative;
+            z-index: 1;
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.14);
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-proof-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .hero-proof-card strong {
+            display: block;
+            margin-top: 8px;
+            font-family: "Lexend", sans-serif;
+            font-size: 1rem;
+            line-height: 1.32;
+        }
+
+        .hero-proof-card p {
+            margin: 8px 0 0;
+            color: rgba(242, 246, 255, 0.78);
+            font-size: 14px;
+            line-height: 1.62;
+        }
+
+        .hero-actions,
+        .signal-list,
+        .metric-grid,
+        .glossary-grid,
+        .form-grid,
+        .section-grid,
+        .chip-list,
+        .record-actions,
+        .record-meta,
+        .record-stack,
+        .action-row,
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+        }
+
+        .hero-actions {
+            margin-top: var(--space-sm);
+        }
+
+        .hero-side {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 14px;
+            align-content: space-between;
+            padding: 18px;
+            border-radius: calc(var(--radius-lg) - 6px);
+            background: rgba(248, 251, 255, 0.09);
+            border: 1px solid rgba(248, 251, 255, 0.16);
+            backdrop-filter: blur(12px);
+        }
+
+        .session-compact {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.18);
+        }
+
+        .session-compact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .session-compact-title {
+            font: 700 0.98rem/1.2 "Lexend", sans-serif;
+        }
+
+        .session-compact-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .session-compact-item {
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .session-compact-item span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .session-compact-item strong {
+            display: block;
+            margin-top: 6px;
+            font-family: "Lexend", sans-serif;
+            font-size: 0.94rem;
+            word-break: break-word;
+        }
+
+        .menu-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .hero-side-title {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.2rem;
+        }
+
+        .signal {
+            display: grid;
+            gap: 6px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 250, 243, 0.14);
+        }
+
+        .signal:last-child {
+            border-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .signal-label {
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .signal strong {
+            font-size: 1.08rem;
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.55;
+        }
+
+        .btn:focus-visible,
+        .input:focus-visible,
+        .select:focus-visible {
+            outline: 2px solid color-mix(in oklch, var(--teal) 70%, white);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: oklch(0.95 0.03 85);
+            color: oklch(0.23 0.03 252);
+            font-weight: 700;
+        }
+
+        .btn-ghost {
+            border-color: rgba(245, 249, 255, 0.24);
+            background: rgba(245, 249, 255, 0.05);
+            color: oklch(0.972 0.008 95);
+        }
+
+        .btn-ink {
+            background: var(--ink);
+            color: oklch(0.982 0.004 95);
+            font-weight: 700;
+        }
+
+        .btn-soft {
+            background: color-mix(in oklch, var(--surface-strong) 84%, white);
+            color: var(--ink);
+            border-color: color-mix(in oklch, var(--line) 88%, white);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border-color: color-mix(in oklch, var(--danger) 28%, white);
+        }
+
+        .overview {
+            margin-top: 22px;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+        }
+
+        .panel {
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            box-shadow: 0 18px 48px rgba(15, 23, 42, 0.06);
+            backdrop-filter: blur(18px);
+        }
+
+        .panel::after {
+            content: "";
+            position: absolute;
+            inset: auto 24px 0 auto;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .panel-header {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-lg);
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.26rem;
+        }
+
+        .panel-desc {
+            margin: 6px 0 0;
+            max-width: 60ch;
+            color: var(--ink-soft);
+            line-height: 1.62;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .metric-card {
+            position: relative;
+            padding: 16px;
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(244, 247, 255, 0.92)),
+                color-mix(in oklch, var(--surface-strong) 94%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            min-height: 124px;
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .metric-label {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .metric-value {
+            margin-top: 14px;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(1.7rem, 2.4vw, 2.8rem);
+            line-height: 1;
+        }
+
+        .metric-note {
+            margin-top: 10px;
+            color: color-mix(in oklch, var(--ink-soft) 82%, white);
+            font-size: 13px;
+        }
+
+        .metric-card.compact {
+            min-height: 108px;
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .waterfall-grid {
+            columns: 280px 3;
+            column-gap: 16px;
+        }
+
+        .waterfall-grid > * {
+            break-inside: avoid;
+            margin: 0 0 16px;
+        }
+
+        .glossary-item {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 90%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .glossary-item strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.98rem;
+        }
+
+        .glossary-item p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        .workspace {
+            margin-top: 22px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .workspace-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr;
+            align-items: start;
+        }
+
+        .workspace-grid > .stack:last-child {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: stretch;
+        }
+
+        .governance-grid > .panel {
+            height: 100%;
+        }
+
+        .panel-departments {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .panel-roles {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .panel-permissions {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .panel-authority {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .panel-apps {
+            grid-column: 1 / -1;
+            grid-row: 3;
+        }
+
+        .stack {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: var(--space-md);
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field span {
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .span-12 { grid-column: span 12; }
+        .span-8 { grid-column: span 8; }
+        .span-6 { grid-column: span 6; }
+        .span-4 { grid-column: span 4; }
+
+        .input,
+        .select {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(71, 85, 105, 0.18);
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--ink);
+        }
+
+        .select[multiple] {
+            min-height: 118px;
+            padding-block: 8px;
+        }
+
+        .helper {
+            color: var(--ink-soft);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .inline-field {
+            min-width: 200px;
+        }
+
+        .inline-field.grow {
+            flex: 1 1 280px;
+        }
+
+        .callout {
+            padding: 16px;
+            border-radius: 20px;
+            background: color-mix(in oklch, var(--surface-strong) 82%, white);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            color: var(--ink-soft);
+            line-height: 1.72;
+        }
+
+        .callout strong {
+            color: var(--ink);
+        }
+
+        .toolbar {
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .import-shell {
+            display: grid;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .import-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .audit-toolbar {
+            align-items: end;
+        }
+
+        .status-pill,
+        .mini-tag,
+        .code-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .status-pill.ACTIVE {
+            background: color-mix(in oklch, var(--olive) 18%, white);
+            color: oklch(0.38 0.09 140);
+        }
+
+        .status-pill.LOCKED {
+            background: color-mix(in oklch, var(--danger) 14%, white);
+            color: oklch(0.44 0.15 28);
+        }
+
+        .status-pill.DISABLED {
+            background: color-mix(in oklch, var(--disabled) 10%, white);
+            color: oklch(0.44 0.025 260);
+        }
+
+        .mini-tag {
+            background: color-mix(in oklch, var(--surface-strong) 86%, white);
+            color: var(--ink-soft);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+        }
+
+        .code-tag {
+            background: color-mix(in oklch, var(--teal) 14%, white);
+            color: var(--teal-deep);
+        }
+
+        .records {
+            display: grid;
+            gap: var(--space-md);
+        }
+
+        .record {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 24px;
+            background: rgba(255, 253, 248, 0.92);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+        }
+
+        .record-main {
+            display: flex;
+            justify-content: space-between;
+            gap: var(--space-lg);
+            align-items: flex-start;
+        }
+
+        .record-title {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .record-subtitle,
+        .record-meta span {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.65;
+        }
+
+        .record-stack {
+            align-items: flex-start;
+        }
+
+        .chip-list {
+            align-items: flex-start;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 12%, white);
+            color: var(--teal-deep);
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+        }
+
+        .chip:hover {
+            transform: translateY(-1px);
+        }
+
+        .chip.alt {
+            background: color-mix(in oklch, var(--clay) 18%, white);
+            color: oklch(0.48 0.07 82);
+        }
+
+        .chip.muted {
+            background: color-mix(in oklch, var(--disabled) 8%, white);
+            color: oklch(0.44 0.02 250);
+        }
+
+        .data-wrap {
+            overflow: auto;
+            border-radius: 20px;
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        .scroll-region {
+            max-height: 560px;
+            overflow: auto;
+            padding-right: 6px;
+        }
+
+        .scroll-region.tall {
+            max-height: 640px;
+        }
+
+        .scroll-region.compact {
+            max-height: 500px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 13px 14px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.08);
+            font-size: 14px;
+        }
+
+        .data-table th {
+            position: sticky;
+            top: 0;
+            background: color-mix(in oklch, var(--surface-strong) 96%, white);
+            z-index: 1;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .data-table .primary-cell {
+            display: grid;
+            gap: 4px;
+        }
+
+        .permission-preview {
+            display: block;
+            max-width: 38ch;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            color: var(--ink-soft);
+            line-height: 1.65;
+        }
+
+        .table-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(96px, 1fr));
+            gap: 8px;
+            justify-content: start;
+            min-width: 212px;
+        }
+
+        .table-actions .btn {
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            padding: 18px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 84%, white);
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .section-grid {
+            display: grid;
+            gap: var(--space-md);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .legend-card {
+            padding: 16px;
+            border-radius: 20px;
+            background: color-mix(in oklch, var(--surface-strong) 86%, white);
+            border: 1px solid rgba(71, 85, 105, 0.1);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .metric-card:hover,
+        .glossary-item:hover,
+        .legend-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+            border-color: rgba(71, 85, 105, 0.16);
+        }
+
+        .legend-card h3,
+        .legend-card h4 {
+            margin: 0 0 8px;
+            font-size: 0.96rem;
+        }
+
+        .legend-card p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .mono {
+            font-family: "Lexend", sans-serif;
+            letter-spacing: 0.03em;
+        }
+
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(126, 94, 56, 0.1);
+        }
+
+        .pagination-status {
+            color: var(--ink-soft);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .pagination-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .page-size {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+
+        .page-select {
+            min-height: 34px;
+            width: 78px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 252, 247, 0.92);
+        }
+
+        .page-btn {
+            min-width: 42px;
+            min-height: 40px;
+            padding: 0 14px;
+        }
+
+        .page-btn.active {
+            background: var(--ink);
+            color: oklch(0.982 0.004 95);
+            border-color: var(--ink);
+        }
+
+        .page-btn[disabled] {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-dots {
+            color: var(--ink-soft);
+            padding: 0 4px;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1180px) {
+            .hero,
+            .overview,
+            .workspace-grid,
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-proof-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .waterfall-grid {
+                columns: 1;
+            }
+
+            .workspace-grid > .stack:last-child {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-departments,
+            .panel-roles,
+            .panel-permissions,
+            .panel-authority,
+            .panel-apps {
+                grid-column: auto;
+                grid-row: auto;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .app-shell {
+                padding: 14px 14px 32px;
+            }
+
+            .panel,
+            .hero {
+                padding: 18px;
+                border-radius: 22px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .span-12,
+            .span-8,
+            .span-6,
+            .span-4 {
+                grid-column: auto;
+            }
+
+            .record-main,
+            .panel-header,
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .chip[href^="#"] {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
+</head>
+<body>
+<main id="app" class="app-shell">
+    <div v-if="flash.show" class="flash-banner" :class="flash.tone" role="status" aria-live="polite">
+        <div class="flash-copy">
+            <div class="flash-title">{{ flash.tone === 'error' ? '操作失败' : '操作成功' }}</div>
+            <div class="flash-message">{{ flash.message }}</div>
+        </div>
+        <button class="btn btn-soft" @click="clearFlash">关闭</button>
+    </div>
+    <section class="hero">
+        <div class="hero-copy">
+            <div class="eyebrow">Identity Governance Console</div>
+            <h1>把用户、角色、权限与 SSO 关系讲清楚</h1>
+            <p class="hero-lead">
+                这是一个用于课程答辩与后台演示的 IAM 治理台。它把用户目录、部门继承、RBAC 授权、OAuth2 客户端和审计轨迹放在一套叙事结构里，既能现场操作，也能直观看出系统设计的边界与能力。
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" @click="loadAll">刷新全局数据</button>
+                <a class="btn btn-ghost" href="http://127.0.0.1:8081/">打开 Demo App A</a>
+                <a class="btn btn-ghost" href="http://127.0.0.1:8082/">打开 Demo App B</a>
+                <a class="btn btn-ghost" href="/logout">退出登录</a>
+            </div>
+            <div class="hero-proof-grid">
+                <article class="hero-proof-card">
+                    <span>治理主线</span>
+                    <strong>用户、角色、权限与客户端在同一叙事里闭环</strong>
+                    <p>首屏就把 IAM 的组织关系、授权模型和下游应用接入放到一张大图里说明清楚。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>演示效率</span>
+                    <strong>后台操作、审计轨迹和身份上下文同步可见</strong>
+                    <p>适合投屏讲解，既能动手演示，也能把系统能力边界直接讲明白。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>运行时视角</span>
+                    <strong>治理模型与 Spring Security 判权结果对齐</strong>
+                    <p>角色如何映射、权限如何继承、Authority 如何参与判断，都能在页面里一眼看出。</p>
+                </article>
+            </div>
+        </div>
+        <aside class="hero-side">
+            <div class="session-compact" v-if="session">
+                <div class="session-compact-header">
+                    <div class="session-compact-title">当前登录用户</div>
+                    <span class="mini-tag">{{ session.title }}</span>
+                </div>
+                <div class="session-compact-meta">
+                    <div class="session-compact-item">
+                        <span>账号</span>
+                        <strong>{{ session.username }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>部门</span>
+                        <strong>{{ session.departmentName || '未分配' }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>角色数</span>
+                        <strong>{{ session.roles.length }}</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>权限数</span>
+                        <strong>{{ session.permissions.length }}</strong>
+                    </div>
+                </div>
+                <div class="menu-strip">
+                    <a class="chip" v-if="canViewUsers" href="#users-panel">用户目录</a>
+                    <a class="chip" v-if="canViewDepartments" href="#departments-panel">部门拓扑</a>
+                    <a class="chip" v-if="canViewRoles" href="#roles-panel">角色编排</a>
+                    <a class="chip" v-if="canViewPermissions" href="#permissions-panel">权限词典</a>
+                    <a class="chip" v-if="canViewApps" href="#apps-panel">应用客户端</a>
+                    <a class="chip" v-if="canViewLogs" href="#logs-panel">审计轨迹</a>
+                </div>
+            </div>
+            <div>
+                <h2 class="hero-side-title">治理看板信号</h2>
+                <div class="signal-list">
+                    <div class="signal">
+                        <span class="signal-label">认证链路</span>
+                        <strong>OAuth2 / OIDC + PKCE + MFA</strong>
+                    </div>
+                    <div class="signal">
+                        <span class="signal-label">授权模型</span>
+                        <strong>用户 -> 角色 -> 权限，部门可继承角色</strong>
+                    </div>
+                    <div class="signal">
+                        <span class="signal-label">运行期检查</span>
+                        <strong>Spring Authorities 映射为 `ROLE_*` 与 `PERM_*`</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="helper">
+                首屏优先回答三个问题：谁能进系统、能做什么、这份能力在 Spring Security 里最终以什么授权串参与判断。
+            </div>
+        </aside>
+    </section>
+
+    <section class="overview">
+        <article class="panel" id="overview-panel" v-if="canViewUsers">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">治理总览</h2>
+                    <p class="panel-desc">用投屏友好的方式展示当前环境的数据规模与治理边界，答辩时可直接作为讲解起点。</p>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card" v-for="metric in metrics" :key="metric.label">
+                    <div class="metric-label">{{ metric.label }}</div>
+                    <div class="metric-value">{{ metric.value }}</div>
+                    <div class="metric-note">{{ metric.note }}</div>
+                </div>
+            </div>
+        </article>
+
+        <article class="panel" id="glossary-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">概念词典</h2>
+                    <p class="panel-desc">把答辩里最容易混淆的术语放在一起，让角色、权限与 Spring Authority 的关系在界面里直接自解释。</p>
+                </div>
+            </div>
+            <div class="glossary-grid">
+                <div class="glossary-item" v-for="item in glossary" :key="item.title">
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.description }}</p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="workspace">
+        <article class="panel" id="users-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">用户目录与生效权限</h2>
+                        <p class="panel-desc">用户可直接绑定角色，也会从所在部门及祖先部门继承角色，因此列表里展示的是“最终生效”的角色与权限结果。</p>
+                    </div>
+                    <button v-if="canWriteUsers" class="btn btn-soft" @click="resetUserForm">清空用户表单</button>
+                </div>
+
+                <form v-if="canWriteUsers" class="form-grid" @submit.prevent="saveUser">
+                    <label class="field span-4">
+                        <span>用户名</span>
+                        <input class="input" v-model="forms.user.username" placeholder="例如：admin" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>邮箱</span>
+                        <input class="input" v-model="forms.user.email" placeholder="user@example.com" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>手机号</span>
+                        <input class="input" v-model="forms.user.phone" placeholder="13800001234" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>密码</span>
+                        <input class="input" type="password" v-model="forms.user.password" placeholder="新建用户时必填">
+                    </label>
+                    <label class="field span-4">
+                        <span>状态</span>
+                        <select class="select" v-model="forms.user.status">
+                            <option>ACTIVE</option>
+                            <option>DISABLED</option>
+                            <option>LOCKED</option>
+                        </select>
+                    </label>
+                    <label class="field span-4">
+                        <span>所属部门</span>
+                        <select class="select" v-model.number="forms.user.departmentId">
+                            <option :value="null">未分配部门</option>
+                            <option v-for="item in flatDepartments" :key="item.id" :value="item.id">{{ item.indentedName }}</option>
+                        </select>
+                    </label>
+                    <label class="field span-12">
+                        <span>直属角色</span>
+                        <select class="select" multiple v-model="forms.user.roleIds">
+                            <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.code }} / {{ role.name }}</option>
+                        </select>
+                        <div class="helper">角色是业务身份包，例如“系统管理员”“审计员”。角色本身不直接执行动作，它聚合多个权限。</div>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.user.id ? '更新用户' : '创建用户' }}</button>
+                    </div>
+                </form>
+
+                <div class="toolbar">
+                    <div class="helper">最终权限 = 用户直属角色权限 + 部门继承角色权限。下方列表展示的是合并后的结果。</div>
+                </div>
+
+                <div class="callout import-shell" v-if="canWriteUsers">
+                    <div class="panel-header" style="margin-bottom:12px;">
+                        <div>
+                            <h3 class="panel-title" style="font-size:1.02rem;">CSV 批量导入</h3>
+                            <p class="panel-desc">使用统一模板做 UTF-8 CSV 预检与整批提交。系统会按 username 执行 upsert，并给出逐行错误与警告。</p>
+                        </div>
+                        <a class="btn btn-soft" href="/api/users/import/template">下载模板</a>
+                    </div>
+                    <div class="form-grid">
+                        <label class="field span-8">
+                            <span>导入文件</span>
+                            <input id="user-import-file" name="user-import-file" class="input" type="file" accept=".csv,text/csv" @change="selectImportFile">
+                            <div class="helper" v-if="importState.fileName">当前文件：{{ importState.fileName }}</div>
+                        </label>
+                        <div class="field span-4">
+                            <span>导入动作</span>
+                            <div class="action-row">
+                                <button class="btn btn-soft" type="button" @click="previewUserImport">先预检</button>
+                                <button class="btn btn-ink" type="button" @click="commitUserImport" :disabled="!importState.preview || importHasBlockingErrors">确认导入</button>
+                                <button class="btn btn-soft" type="button" @click="resetImportState">清空</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="import-summary" v-if="importState.preview">
+                        <div class="metric-card compact">
+                            <div class="metric-label">总行数</div>
+                            <div class="metric-value">{{ importState.preview.summary.totalRows }}</div>
+                            <div class="metric-note">有效数据行</div>
+                        </div>
+                        <div class="metric-card compact">
+                            <div class="metric-label">可导入</div>
+                            <div class="metric-value">{{ importState.preview.summary.successRows }}</div>
+                            <div class="metric-note">通过预检的行数</div>
+                        </div>
+                        <div class="metric-card compact">
+                            <div class="metric-label">警告</div>
+                            <div class="metric-value">{{ importState.preview.summary.warningRows }}</div>
+                            <div class="metric-note">例如保留原密码</div>
+                        </div>
+                        <div class="metric-card compact">
+                            <div class="metric-label">错误</div>
+                            <div class="metric-value">{{ importState.preview.summary.errorRows }}</div>
+                            <div class="metric-note">{{ importState.preview.summary.committed ? '已提交' : '未提交' }}</div>
+                        </div>
+                    </div>
+                    <div class="records" v-if="importState.preview?.rows?.length">
+                        <article class="record" v-for="row in importState.preview.rows" :key="`import-${row.rowNumber}-${row.username || 'file'}`">
+                            <div class="record-main">
+                                <div>
+                                    <h3 class="record-title">第 {{ row.rowNumber }} 行 / {{ row.username || '文件级校验' }}</h3>
+                                    <div class="record-subtitle">动作：{{ row.operation }}，结果：{{ importOutcomeText(row.outcome) }}</div>
+                                </div>
+                                <span class="status-pill" :class="row.outcome === 'ERROR' ? 'LOCKED' : 'ACTIVE'">{{ importOutcomeText(row.outcome) }}</span>
+                            </div>
+                            <div class="chip-list" v-if="row.warnings?.length">
+                                <span class="chip alt" v-for="warning in row.warnings" :key="warning">{{ warning }}</span>
+                            </div>
+                            <div class="chip-list" v-if="row.errors?.length">
+                                <span class="chip" style="background: color-mix(in oklch, var(--danger) 15%, white); color: oklch(0.42 0.14 28);" v-for="error in row.errors" :key="error">{{ error }}</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="data-wrap scroll-region tall" style="margin-top:20px;">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>用户</th>
+                            <th>部门 / 状态</th>
+                            <th>生效角色</th>
+                            <th>生效权限</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="user in pagedItems(users, 'users')" :key="user.id">
+                            <td>
+                                <div class="primary-cell">
+                                    <strong>{{ user.username }}</strong>
+                                    <span class="record-subtitle">{{ user.email }}</span>
+                                    <span class="record-subtitle">手机：{{ user.phone }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="record-stack">
+                                    <span>{{ user.departmentName || '未分配部门' }}</span>
+                                    <span class="status-pill" :class="user.status">{{ statusText(user.status) }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="chip-list">
+                                    <span class="chip" v-for="code in user.roleCodes" :key="code">{{ roleLabel(code) }}</span>
+                                    <span class="chip muted" v-if="!user.roleCodes.length">暂无角色</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span v-if="user.permissionCodes.length" class="permission-preview" :title="fullPermissionList(user.permissionCodes)">{{ permissionPreview(user.permissionCodes) }}</span>
+                                <span class="chip muted" v-else>暂无权限</span>
+                            </td>
+                            <td>
+                                <div class="record-actions table-actions">
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="editUser(user)">编辑</button>
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="changeUserStatus(user)">改状态</button>
+                                    <button v-if="canWriteUsers" class="btn btn-soft" @click="resetPassword(user)">重置密码</button>
+                                    <button v-if="canWriteUsers" class="btn btn-danger" @click="deleteUser(user.id)">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar" v-if="users.length">
+                    <div class="pagination-status">共 {{ users.length }} 个用户，当前第 {{ currentPage('users') }} / {{ totalPages(users, 'users') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.users.size" @change="syncPage('users', users)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('users', currentPage('users') - 1, users)" :disabled="currentPage('users') === 1" aria-label="用户上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(users, 'users')" :key="`users-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('users') }" @click="setPage('users', page, users)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('users', currentPage('users') + 1, users)" :disabled="currentPage('users') === totalPages(users, 'users')" aria-label="用户下一页">下一页</button>
+                    </div>
+                </div>
+        </article>
+
+        <div class="workspace-grid">
+        <div class="stack">
+            <article class="panel" id="logs-panel" v-if="canViewLogs">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">审计轨迹</h2>
+                        <p class="panel-desc">审计日志记录后台操作和认证过程，是演示“谁在什么时间、从哪里、登录什么系统或操作什么资源”的证据链。</p>
+                    </div>
+                    <button class="btn btn-soft" @click="loadLogs">刷新日志</button>
+                </div>
+                <div class="toolbar audit-toolbar">
+                    <label class="field inline-field">
+                        <span>目标系统</span>
+                        <select class="select" v-model="logFilters.targetId">
+                            <option value="ALL">全部目标</option>
+                            <option v-for="target in logTargets" :key="target.id" :value="target.id">{{ target.name }}</option>
+                        </select>
+                    </label>
+                    <label class="field inline-field">
+                        <span>事件类型</span>
+                        <select class="select" v-model="logFilters.mode">
+                            <option value="ALL">全部事件</option>
+                            <option value="ANOMALY">仅异常登录</option>
+                            <option value="AUTH">仅认证事件</option>
+                            <option value="ADMIN">仅后台治理</option>
+                        </select>
+                    </label>
+                    <label class="field inline-field grow">
+                        <span>关键词</span>
+                        <input class="input" v-model="logFilters.keyword" placeholder="按用户、动作、目标、详情或浏览器检索">
+                    </label>
+                </div>
+                <div class="data-wrap">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>用户</th>
+                            <th>目标系统</th>
+                            <th>动作 / 状态</th>
+                            <th>来源</th>
+                            <th>详情</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="log in pagedItems(filteredLogs, 'logs')" :key="log.id">
+                            <td>{{ formatTime(log.timestamp) }}</td>
+                            <td>{{ log.username || '-' }}</td>
+                            <td>
+                                <div class="record-stack">
+                                    <strong>{{ logTargetText(log) }}</strong>
+                                    <span class="record-subtitle mono">{{ logTargetMeta(log) }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="record-stack">
+                                    <span>{{ log.action }}</span>
+                                    <span class="mini-tag">{{ log.status }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="record-stack">
+                                    <span class="mono">{{ log.ipAddress || '-' }}</span>
+                                    <span class="record-subtitle" :title="log.userAgent || '-'">{{ shortUserAgent(log.userAgent) }}</span>
+                                </div>
+                            </td>
+                            <td>{{ log.details || '-' }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar" v-if="filteredLogs.length">
+                    <div class="pagination-status">共 {{ filteredLogs.length }} 条审计记录，当前第 {{ currentPage('logs') }} / {{ totalPages(filteredLogs, 'logs') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.logs.size" @change="syncPage('logs', filteredLogs)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('logs', currentPage('logs') - 1, filteredLogs)" :disabled="currentPage('logs') === 1" aria-label="日志上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(filteredLogs, 'logs')" :key="`logs-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('logs') }" @click="setPage('logs', page, filteredLogs)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('logs', currentPage('logs') + 1, filteredLogs)" :disabled="currentPage('logs') === totalPages(filteredLogs, 'logs')" aria-label="日志下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <div class="stack governance-grid">
+            <article class="panel panel-departments" id="departments-panel" v-if="canViewDepartments">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">部门拓扑</h2>
+                        <p class="panel-desc">部门不仅是组织结构，也能挂接角色，从而让下级用户继承治理能力。</p>
+                    </div>
+                </div>
+                <form v-if="canWriteDepartments" class="form-grid" @submit.prevent="saveDepartment">
+                    <label class="field span-6">
+                        <span>部门名称</span>
+                        <input class="input" v-model="forms.department.name" placeholder="例如：研发中心" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>上级部门</span>
+                        <select class="select" v-model.number="forms.department.parentId">
+                            <option :value="null">顶级部门</option>
+                            <option v-for="item in flatDepartments" :key="item.id" :value="item.id">{{ item.indentedName }}</option>
+                        </select>
+                    </label>
+                    <label class="field span-12">
+                        <span>挂载角色</span>
+                        <select class="select" multiple v-model="forms.department.roleIds">
+                            <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.code }} / {{ role.name }}</option>
+                        </select>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.department.id ? '更新部门' : '创建部门' }}</button>
+                    </div>
+                </form>
+
+                <div class="records scroll-region compact waterfall-grid" style="margin-top:20px;">
+                    <article class="record" v-for="department in flatDepartments" :key="department.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ department.indentedName }}</h3>
+                                <div class="record-subtitle">部门角色会被该部门及其子层级用户继承。</div>
+                            </div>
+                            <div class="record-actions">
+                                <button v-if="canWriteDepartments" class="btn btn-soft" @click="editDepartment(department)">编辑</button>
+                                <button v-if="canWriteDepartments" class="btn btn-danger" @click="deleteDepartment(department.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="chip" v-for="code in department.roleCodes" :key="code">{{ roleLabel(code) }}</span>
+                            <span class="chip muted" v-if="!department.roleCodes.length">未挂载角色</span>
+                        </div>
+                    </article>
+                </div>
+            </article>
+
+            <article class="panel panel-roles" id="roles-panel" v-if="canViewRoles">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">角色编排</h2>
+                        <p class="panel-desc">角色是业务身份包，聚合多个权限。答辩时可用这一栏解释 RBAC 的“中间层”。</p>
+                    </div>
+                </div>
+                <form v-if="canWriteRoles" class="form-grid" @submit.prevent="saveRole">
+                    <label class="field span-4">
+                        <span>角色编码</span>
+                        <input class="input" v-model="forms.role.code" placeholder="例如：ADMIN" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>角色名称</span>
+                        <input class="input" v-model="forms.role.name" placeholder="例如：系统管理员" required>
+                    </label>
+                    <label class="field span-4">
+                        <span>角色说明</span>
+                        <input class="input" v-model="forms.role.description" placeholder="例如：拥有全部后台治理能力">
+                    </label>
+                    <label class="field span-12">
+                        <span>绑定权限</span>
+                        <select class="select" multiple v-model="forms.role.permissionIds">
+                            <option v-for="permission in permissions" :key="permission.id" :value="permission.id">{{ permission.code }} / {{ permission.name }}</option>
+                        </select>
+                        <div class="helper">权限是最小动作单元，例如“用户查询”“应用写入”。Spring 运行时会把它们映射成 `PERM_*` Authority。</div>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.role.id ? '更新角色' : '创建角色' }}</button>
+                    </div>
+                </form>
+
+                <div class="records waterfall-grid" style="margin-top:20px;">
+                    <article class="record" v-for="role in pagedItems(roles, 'roles')" :key="role.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ role.code }} / {{ role.name }}</h3>
+                                <div class="record-subtitle">{{ role.description || '未填写角色说明' }}</div>
+                            </div>
+                            <div class="record-actions">
+                                <button v-if="canWriteRoles" class="btn btn-soft" @click="editRole(role)">编辑</button>
+                                <button v-if="canWriteRoles" class="btn btn-danger" @click="deleteRole(role.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="chip alt" v-for="permission in role.permissions" :key="permission.id">{{ permission.code }} / {{ permission.name }}</span>
+                            <span class="chip muted" v-if="!role.permissions.length">未绑定权限</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="pagination-bar" v-if="roles.length">
+                    <div class="pagination-status">共 {{ roles.length }} 个角色包，当前第 {{ currentPage('roles') }} / {{ totalPages(roles, 'roles') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.roles.size" @change="syncPage('roles', roles)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('roles', currentPage('roles') - 1, roles)" :disabled="currentPage('roles') === 1" aria-label="角色上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(roles, 'roles')" :key="`roles-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('roles') }" @click="setPage('roles', page, roles)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('roles', currentPage('roles') + 1, roles)" :disabled="currentPage('roles') === totalPages(roles, 'roles')" aria-label="角色下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel panel-permissions" id="permissions-panel" v-if="canViewPermissions">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">权限词典</h2>
+                        <p class="panel-desc">每个 Permission 都是最小授权颗粒。这里直接给出中文名称、用途和资源归属。</p>
+                    </div>
+                </div>
+                <div class="section-grid scroll-region compact waterfall-grid">
+                    <article class="legend-card" v-for="permission in permissions" :key="permission.id">
+                        <h3>{{ permission.code }}</h3>
+                        <p>{{ permission.name }}{{ permission.description && permission.description !== permission.name ? '：' + permission.description : '' }}</p>
+                        <div class="chip-list" style="margin-top:12px;">
+                            <span class="mini-tag">{{ permissionTypeText(permission.permissionType) }}</span>
+                            <span class="mini-tag mono">{{ permission.resource }}</span>
+                        </div>
+                    </article>
+                    <div class="empty-state" v-if="!permissions.length">暂无权限数据。</div>
+                </div>
+            </article>
+
+            <article class="panel panel-apps" id="apps-panel" v-if="canViewApps">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">应用客户端注册</h2>
+                        <p class="panel-desc">这里维护 OAuth2 客户端。重点信息包括回调地址、Scope、认证方式和是否强制 PKCE。</p>
+                    </div>
+                </div>
+                <form v-if="canWriteApps" class="form-grid" @submit.prevent="saveApp">
+                    <label class="field span-6">
+                        <span>Client ID</span>
+                        <input class="input" v-model="forms.app.clientId" placeholder="app-a" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>应用名称</span>
+                        <input class="input" v-model="forms.app.clientName" placeholder="Demo App A" required>
+                    </label>
+                    <label class="field span-6">
+                        <span>Client Secret</span>
+                        <input class="input" v-model="forms.app.clientSecret" placeholder="留空表示更新时不改">
+                    </label>
+                    <label class="field span-6">
+                        <span>授权回调地址</span>
+                        <input class="input" v-model="forms.app.redirectUrisText" placeholder="逗号分隔">
+                    </label>
+                    <label class="field span-6">
+                        <span>退出后回跳地址</span>
+                        <input class="input" v-model="forms.app.postLogoutRedirectUrisText" placeholder="逗号分隔">
+                    </label>
+                    <label class="field span-6">
+                        <span>Scopes</span>
+                        <input class="input" v-model="forms.app.scopesText" placeholder="openid,profile">
+                    </label>
+                    <label class="field span-6">
+                        <span>Grant Types</span>
+                        <input class="input" v-model="forms.app.grantTypesText" placeholder="authorization_code,refresh_token">
+                    </label>
+                    <label class="field span-6">
+                        <span>认证方式</span>
+                        <input class="input" v-model="forms.app.authenticationMethodsText" placeholder="client_secret_basic">
+                    </label>
+                    <label class="field span-12">
+                        <span>PKCE</span>
+                        <select class="select" v-model="forms.app.requireProofKey">
+                            <option :value="true">强制启用 PKCE</option>
+                            <option :value="false">不强制 PKCE</option>
+                        </select>
+                    </label>
+                    <label class="field span-4">
+                        <span>授权码 TTL（分钟）</span>
+                        <input class="input" type="number" min="1" v-model.number="forms.app.authorizationCodeTtlMinutes">
+                    </label>
+                    <label class="field span-4">
+                        <span>Access Token TTL（分钟）</span>
+                        <input class="input" type="number" min="1" v-model.number="forms.app.accessTokenTtlMinutes">
+                    </label>
+                    <label class="field span-4">
+                        <span>Refresh Token TTL（分钟）</span>
+                        <input class="input" type="number" min="1" v-model.number="forms.app.refreshTokenTtlMinutes">
+                    </label>
+                    <label class="field span-12">
+                        <span>Refresh Token 复用</span>
+                        <select class="select" v-model="forms.app.reuseRefreshTokens">
+                            <option :value="false">每次刷新都轮换新的 Refresh Token</option>
+                            <option :value="true">允许重复复用原 Refresh Token</option>
+                        </select>
+                    </label>
+                    <div class="span-12 action-row">
+                        <button class="btn btn-ink">{{ forms.app.id ? '更新应用' : '创建应用' }}</button>
+                    </div>
+                </form>
+
+                <div class="records" style="margin-top:20px;">
+                    <article class="record" v-for="app in pagedItems(apps, 'apps')" :key="app.id">
+                        <div class="record-main">
+                            <div>
+                                <h3 class="record-title">{{ app.clientId }} / {{ app.clientName }}</h3>
+                                <div class="record-subtitle">回调地址：{{ app.redirectUris.join('，') || '未配置' }}</div>
+                            </div>
+                            <div class="record-actions">
+                                <button v-if="canWriteApps" class="btn btn-soft" @click="editApp(app)">编辑</button>
+                                <button v-if="canWriteApps" class="btn btn-danger" @click="deleteApp(app.id)">删除</button>
+                            </div>
+                        </div>
+                        <div class="chip-list">
+                            <span class="mini-tag">Scopes：{{ app.scopes.join(', ') || '-' }}</span>
+                            <span class="mini-tag">Grant Types：{{ app.grantTypes.join(', ') || '-' }}</span>
+                            <span class="mini-tag">{{ app.requireProofKey ? 'PKCE 已强制' : 'PKCE 未强制' }}</span>
+                            <span class="mini-tag">Code TTL：{{ app.authorizationCodeTtlMinutes }} 分钟</span>
+                            <span class="mini-tag">AT TTL：{{ app.accessTokenTtlMinutes }} 分钟</span>
+                            <span class="mini-tag">RT TTL：{{ app.refreshTokenTtlMinutes }} 分钟</span>
+                            <span class="mini-tag">{{ app.reuseRefreshTokens ? 'RT 可复用' : 'RT 轮换' }}</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="pagination-bar" v-if="apps.length">
+                    <div class="pagination-status">共 {{ apps.length }} 个客户端，当前第 {{ currentPage('apps') }} / {{ totalPages(apps, 'apps') }} 页。</div>
+                    <div class="pagination-actions">
+                        <label class="page-size">
+                            <span>每页</span>
+                            <select class="select page-select" v-model.number="pagination.apps.size" @change="syncPage('apps', apps)">
+                                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                            </select>
+                        </label>
+                        <button class="btn btn-soft page-btn" @click="setPage('apps', currentPage('apps') - 1, apps)" :disabled="currentPage('apps') === 1" aria-label="应用上一页">上一页</button>
+                        <template v-for="(page, index) in pageNumbers(apps, 'apps')" :key="`apps-${page}-${index}`">
+                            <span v-if="page === '...'" class="page-dots">...</span>
+                            <button v-else class="btn btn-soft page-btn" :class="{ active: page === currentPage('apps') }" @click="setPage('apps', page, apps)">{{ page }}</button>
+                        </template>
+                        <button class="btn btn-soft page-btn" @click="setPage('apps', currentPage('apps') + 1, apps)" :disabled="currentPage('apps') === totalPages(apps, 'apps')" aria-label="应用下一页">下一页</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel panel-authority" id="authority-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Authority 映射说明</h2>
+                        <p class="panel-desc">这部分是给答辩讲解准备的：Spring Security 最终并不直接判断“角色对象”或“权限对象”，而是判断运行时 Authority 字符串。</p>
+                    </div>
+                </div>
+                <div class="section-grid">
+                    <div class="legend-card">
+                        <h3>`ROLE_ADMIN`</h3>
+                        <p>表示角色 Authority。由角色编码 `ADMIN` 映射而来，供 `hasRole('ADMIN')` 这类表达式使用。</p>
+                    </div>
+                    <div class="legend-card">
+                        <h3>`PERM_USER_WRITE`</h3>
+                        <p>表示权限 Authority。由权限编码 `USER_WRITE` 映射而来，供 `hasAuthority('PERM_USER_WRITE')` 使用。</p>
+                    </div>
+                    <div class="legend-card">
+                        <h3>角色与权限的关系</h3>
+                        <p>角色是业务身份包，权限是最小动作单元。Spring 在运行时把两者都铺平成 Authority，再参与访问控制判断。</p>
+                    </div>
+                </div>
+            </article>
+        </div>
+        </div>
+    </section>
+</main>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            users: [],
+            departments: [],
+            roles: [],
+            permissions: [],
+            apps: [],
+            logs: [],
+            glossary: [
+                {
+                    title: '角色 Role',
+                    description: '角色是业务身份包，例如系统管理员、研发工程师、审计员。它负责聚合多个权限，并分配给用户或部门。'
+                },
+                {
+                    title: '权限 Permission',
+                    description: '权限是最小动作单元，例如用户查询、部门写入、访问某个应用。它决定“具体能做什么”。'
+                },
+                {
+                    title: 'Spring Authority',
+                    description: 'Authority 是 Spring Security 运行时判断的授权字符串。角色会映射为 ROLE_*，权限会映射为 PERM_*。'
+                },
+                {
+                    title: 'Claims',
+                    description: 'Claims 是 IAM 写入 Token 或 OIDC 用户信息中的身份上下文，例如用户名、角色、权限、邮箱等。'
+                }
+            ],
+            pageSizeOptions: [4, 6, 8, 10],
+            pagination: {
+                users: { page: 1, size: 6 },
+                departments: { page: 1, size: 4 },
+                roles: { page: 1, size: 4 },
+                permissions: { page: 1, size: 6 },
+                apps: { page: 1, size: 4 },
+                logs: { page: 1, size: 6 }
+            },
+            forms: {
+                user: { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] },
+                department: { id: null, name: '', parentId: null, roleIds: [] },
+                role: { id: null, code: '', name: '', description: '', permissionIds: [] },
+                app: {
+                    id: null,
+                    clientId: '',
+                    clientName: '',
+                    clientSecret: '',
+                    redirectUrisText: '',
+                    postLogoutRedirectUrisText: '',
+                    scopesText: 'openid,profile',
+                    grantTypesText: 'authorization_code,refresh_token',
+                    authenticationMethodsText: 'client_secret_basic',
+                    requireProofKey: true,
+                    authorizationCodeTtlMinutes: 5,
+                    accessTokenTtlMinutes: 30,
+                    refreshTokenTtlMinutes: 480,
+                    reuseRefreshTokens: false
+                }
+            },
+            flash: {
+                show: false,
+                tone: 'success',
+                message: ''
+            },
+            importState: {
+                file: null,
+                fileName: '',
+                preview: null
+            },
+            logFilters: {
+                targetId: 'ALL',
+                mode: 'ALL',
+                keyword: ''
+            },
+            session: null
+        };
+    },
+    computed: {
+        flatDepartments() {
+            const result = [];
+            const walk = (items, depth = 0) => {
+                (items || []).forEach(item => {
+                    result.push({
+                        ...item,
+                        depth,
+                        indentedName: `${'　'.repeat(depth)}${item.name}`
+                    });
+                    walk(item.children, depth + 1);
+                });
+            };
+            walk(this.departments);
+            return result;
+        },
+        metrics() {
+            return [
+                { label: '用户主体', value: this.users.length, note: '系统里被治理的账号数量' },
+                { label: '角色包', value: this.roles.length, note: '承担业务身份聚合能力' },
+                { label: '权限颗粒', value: this.permissions.length, note: '最小可授权动作单元' },
+                { label: '客户端', value: this.apps.length, note: '接入 IAM 的 OAuth2 应用' },
+                { label: '审计记录', value: this.logs.length, note: '最近可见的操作与认证痕迹' },
+                { label: '锁定 / 禁用', value: this.users.filter(user => user.status !== 'ACTIVE').length, note: '可用来演示状态控制与风控' }
+            ];
+        },
+        filteredLogs() {
+            return (this.logs || []).filter(log => {
+                if (this.logFilters.targetId !== 'ALL' && (log.targetId || 'none') !== this.logFilters.targetId) {
+                    return false;
+                }
+                if (this.logFilters.mode === 'ANOMALY' && !this.isAnomalyLog(log)) {
+                    return false;
+                }
+                if (this.logFilters.mode === 'AUTH' && !String(log.action || '').startsWith('LOGIN_')) {
+                    return false;
+                }
+                if (this.logFilters.mode === 'ADMIN' && String(log.action || '').startsWith('LOGIN_')) {
+                    return false;
+                }
+                const keyword = (this.logFilters.keyword || '').trim().toLowerCase();
+                if (!keyword) {
+                    return true;
+                }
+                return [
+                    log.username,
+                    log.action,
+                    log.details,
+                    log.targetName,
+                    log.targetId,
+                    log.userAgent
+                ].some(value => String(value || '').toLowerCase().includes(keyword));
+            });
+        },
+        logTargets() {
+            const seen = new Set();
+            return (this.logs || []).reduce((items, log) => {
+                const key = log.targetId || 'none';
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    items.push({
+                        id: key,
+                        name: log.targetName || log.targetId || '未归类目标'
+                    });
+                }
+                return items;
+            }, []);
+        },
+        importHasBlockingErrors() {
+            return (this.importState.preview?.summary?.errorRows || 0) > 0;
+        },
+        canViewUsers() {
+            return this.hasPermission('PERM_USER_READ') || this.hasRole('ADMIN');
+        },
+        canWriteUsers() {
+            return this.hasPermission('PERM_USER_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewDepartments() {
+            return this.hasPermission('PERM_DEPARTMENT_READ') || this.hasRole('ADMIN');
+        },
+        canWriteDepartments() {
+            return this.hasPermission('PERM_DEPARTMENT_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewRoles() {
+            return this.hasPermission('PERM_ROLE_READ') || this.hasRole('ADMIN');
+        },
+        canWriteRoles() {
+            return this.hasPermission('PERM_ROLE_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewPermissions() {
+            return this.canViewRoles;
+        },
+        canViewApps() {
+            return this.hasPermission('PERM_APP_READ') || this.hasRole('ADMIN');
+        },
+        canWriteApps() {
+            return this.hasPermission('PERM_APP_WRITE') || this.hasRole('ADMIN');
+        },
+        canViewLogs() {
+            return this.hasPermission('PERM_AUDIT_READ') || this.hasRole('ADMIN');
+        }
+    },
+    methods: {
+        async api(path, options = {}) {
+            const headers = new Headers(options.headers || {});
+            if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+                headers.set('Content-Type', 'application/json');
+            }
+            const response = await fetch(path, {
+                headers,
+                ...options
+            });
+            const contentType = response.headers.get('content-type') || '';
+            const payload = response.status === 204
+                ? null
+                : (contentType.includes('json') ? await response.json() : await response.text());
+            if (!response.ok) {
+                const error = new Error(typeof payload === 'string' ? payload : JSON.stringify(payload));
+                error.payload = payload;
+                throw error;
+            }
+            if (response.status === 204) {
+                return null;
+            }
+            return payload;
+        },
+        parseList(text) {
+            return (text || '').split(',').map(value => value.trim()).filter(Boolean);
+        },
+        hasRole(roleCode) {
+            return Array.isArray(this.session?.roles) && this.session.roles.includes(roleCode);
+        },
+        hasPermission(permissionCode) {
+            return Array.isArray(this.session?.authorities) && this.session.authorities.includes(permissionCode);
+        },
+        async loadSession() {
+            this.session = await this.api('/api/session');
+        },
+        showFlash(message, tone = 'success') {
+            this.flash = { show: true, tone, message };
+        },
+        clearFlash() {
+            this.flash.show = false;
+        },
+        formatError(error, fallback) {
+            if (error?.payload?.message) {
+                return error.payload.message;
+            }
+            const rawMessage = error?.message?.trim();
+            if (!rawMessage) {
+                return fallback;
+            }
+            try {
+                const parsed = JSON.parse(rawMessage);
+                return parsed.message || fallback;
+            } catch (parseError) {
+                return rawMessage;
+            }
+        },
+        parseStructuredError(error) {
+            if (error?.payload && typeof error.payload === 'object') {
+                return error.payload;
+            }
+            try {
+                return JSON.parse(error?.message || '');
+            } catch (parseError) {
+                return null;
+            }
+        },
+        async loadAll() {
+            if (!this.session) {
+                await this.loadSession();
+            }
+
+            const tasks = [];
+            if (this.canViewUsers) {
+                tasks.push(this.loadUsers());
+            } else {
+                this.users = [];
+            }
+            if (this.canViewDepartments) {
+                tasks.push(this.loadDepartments());
+            } else {
+                this.departments = [];
+            }
+            if (this.canViewRoles) {
+                tasks.push(this.loadRoles(), this.loadPermissions());
+            } else {
+                this.roles = [];
+                this.permissions = [];
+            }
+            if (this.canViewApps) {
+                tasks.push(this.loadApps());
+            } else {
+                this.apps = [];
+            }
+            if (this.canViewLogs) {
+                tasks.push(this.loadLogs());
+            } else {
+                this.logs = [];
+            }
+
+            await Promise.all(tasks);
+        },
+        async loadUsers() {
+            this.users = await this.api('/api/users');
+            this.syncPage('users', this.users);
+        },
+        async loadDepartments() {
+            this.departments = await this.api('/api/departments');
+            this.syncPage('departments', this.flatDepartments);
+        },
+        async loadRoles() {
+            this.roles = await this.api('/api/roles');
+            this.syncPage('roles', this.roles);
+        },
+        async loadPermissions() {
+            this.permissions = await this.api('/api/permissions');
+            this.syncPage('permissions', this.permissions);
+        },
+        async loadApps() {
+            this.apps = await this.api('/api/apps');
+            this.syncPage('apps', this.apps);
+        },
+        async loadLogs() {
+            this.logs = await this.api('/api/audit-logs');
+            this.syncPage('logs', this.filteredLogs);
+        },
+        resetUserForm() {
+            this.forms.user = { id: null, username: '', email: '', phone: '', password: '', status: 'ACTIVE', departmentId: null, roleIds: [] };
+        },
+        resetImportState() {
+            this.importState = { file: null, fileName: '', preview: null };
+            const input = document.getElementById('user-import-file');
+            if (input) {
+                input.value = '';
+            }
+        },
+        selectImportFile(event) {
+            const [file] = event.target.files || [];
+            this.importState.file = file || null;
+            this.importState.fileName = file?.name || '';
+            this.importState.preview = null;
+        },
+        currentPage(key) {
+            return this.pagination[key]?.page || 1;
+        },
+        totalPages(items, key) {
+            const size = this.pagination[key]?.size || 1;
+            return Math.max(1, Math.ceil((items?.length || 0) / size));
+        },
+        pagedItems(items, key) {
+            const size = this.pagination[key]?.size || 1;
+            const page = Math.min(this.currentPage(key), this.totalPages(items, key));
+            const start = (page - 1) * size;
+            return (items || []).slice(start, start + size);
+        },
+        pageNumbers(items, key) {
+            const total = this.totalPages(items, key);
+            const current = this.currentPage(key);
+            if (total <= 5) {
+                return Array.from({ length: total }, (_, index) => index + 1);
+            }
+            if (current <= 3) {
+                return [1, 2, 3, 4, '...', total];
+            }
+            if (current >= total - 2) {
+                return [1, '...', total - 3, total - 2, total - 1, total];
+            }
+            return [1, '...', current - 1, current, current + 1, '...', total];
+        },
+        setPage(key, page, items) {
+            const total = this.totalPages(items, key);
+            const nextPage = Math.max(1, Math.min(total, Number(page) || 1));
+            this.pagination[key].page = nextPage;
+        },
+        syncPage(key, items) {
+            this.setPage(key, this.currentPage(key), items);
+        },
+        statusText(status) {
+            const map = { ACTIVE: '启用中', LOCKED: '已锁定', DISABLED: '已禁用' };
+            return map[status] || status;
+        },
+        permissionTypeText(type) {
+            const map = { FUNCTION: '功能权限', APPLICATION: '应用访问' };
+            return map[type] || type;
+        },
+        roleLabel(code) {
+            const known = {
+                ADMIN: 'ADMIN / 系统管理员',
+                ENGINEER: 'ENGINEER / 研发工程师',
+                AUDITOR: 'AUDITOR / 审计员'
+            };
+            return known[code] || code;
+        },
+        permissionLabel(code) {
+            const permission = this.permissions.find(item => item.code === code);
+            if (permission) {
+                return `${permission.code} / ${permission.name}`;
+            }
+            return code;
+        },
+        fullPermissionList(codes) {
+            return (codes || []).map(code => this.permissionLabel(code)).join('，');
+        },
+        permissionPreview(codes) {
+            return this.fullPermissionList(codes);
+        },
+        async previewUserImport() {
+            if (!this.importState.file) {
+                this.showFlash('请先选择一个 CSV 文件。', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', this.importState.file);
+            try {
+                this.importState.preview = await this.api('/api/users/import/preview', {
+                    method: 'POST',
+                    body: formData
+                });
+                const summary = this.importState.preview.summary;
+                this.showFlash(summary.errorRows
+                    ? `预检完成，发现 ${summary.errorRows} 条阻断错误。`
+                    : `预检通过，共 ${summary.successRows} 行可导入。`, summary.errorRows ? 'error' : 'success');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '预检失败。'), 'error');
+            }
+        },
+        async commitUserImport() {
+            if (!this.importState.file) {
+                this.showFlash('请先选择一个 CSV 文件。', 'error');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', this.importState.file);
+            try {
+                this.importState.preview = await this.api('/api/users/import/commit', {
+                    method: 'POST',
+                    body: formData
+                });
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash(`批量导入完成，共处理 ${this.importState.preview.summary.successRows} 行。`);
+            } catch (error) {
+                const structured = this.parseStructuredError(error);
+                if (structured?.summary) {
+                    this.importState.preview = structured;
+                }
+                this.showFlash(this.formatError(error, '批量导入失败，请先修复预检错误。'), 'error');
+            }
+        },
+        importOutcomeText(outcome) {
+            const map = { READY: '可导入', IMPORTED: '已导入', ERROR: '有错误' };
+            return map[outcome] || outcome;
+        },
+        logTargetText(log) {
+            if (log.targetName) {
+                return log.targetName;
+            }
+            if (log.targetType === 'IAM_CONSOLE') {
+                return 'IAM 控制台';
+            }
+            return log.targetId || '未归类目标';
+        },
+        logTargetMeta(log) {
+            return [log.targetType, log.targetId].filter(Boolean).join(' / ') || '未识别';
+        },
+        isAnomalyLog(log) {
+            return ['LOGIN_FAILURE', 'LOGIN_LOCKED'].includes(log.action) || ['FAILURE', 'LOCKED'].includes(log.status);
+        },
+        shortUserAgent(value) {
+            if (!value) {
+                return '-';
+            }
+            return value.length > 88 ? `${value.slice(0, 88)}…` : value;
+        },
+        editUser(user) {
+            this.forms.user = {
+                ...user,
+                phone: (user.phone || '').replace('****', '0000'),
+                password: '',
+                roleIds: this.roles.filter(role => user.roleCodes.includes(role.code)).map(role => role.id)
+            };
+        },
+        async saveUser() {
+            const method = this.forms.user.id ? 'PUT' : 'POST';
+            const path = this.forms.user.id ? `/api/users/${this.forms.user.id}` : '/api/users';
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.user) });
+                this.resetUserForm();
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '用户已创建。' : '用户信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存用户失败，请检查输入后重试。'), 'error');
+            }
+        },
+        async deleteUser(id) {
+            if (!confirm('确认删除该用户？')) {
+                return;
+            }
+            try {
+                await this.api(`/api/users/${id}`, { method: 'DELETE' });
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash('用户已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除用户失败。'), 'error');
+            }
+        },
+        async changeUserStatus(user) {
+            const status = prompt('输入新的状态：ACTIVE / DISABLED / LOCKED', user.status);
+            if (!status) {
+                return;
+            }
+            try {
+                await this.api(`/api/users/${user.id}/status?status=${status}`, { method: 'PATCH' });
+                await this.loadUsers();
+                await this.loadLogs();
+                this.showFlash(`用户状态已更新为 ${status}。`);
+            } catch (error) {
+                this.showFlash(this.formatError(error, '更新用户状态失败。'), 'error');
+            }
+        },
+        async resetPassword(user) {
+            const newPassword = prompt(`给 ${user.username} 设置新密码`, 'Reset#2026!Temp');
+            if (!newPassword) {
+                return;
+            }
+            try {
+                await this.api(`/api/users/${user.id}/password`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ newPassword })
+                });
+                await this.loadLogs();
+                this.showFlash(`已重置 ${user.username} 的密码。`);
+            } catch (error) {
+                this.showFlash(this.formatError(error, '重置密码失败。'), 'error');
+            }
+        },
+        editDepartment(item) {
+            this.forms.department = {
+                id: item.id,
+                name: item.name,
+                parentId: item.parentId,
+                roleIds: this.roles.filter(role => item.roleCodes.includes(role.code)).map(role => role.id)
+            };
+        },
+        async saveDepartment() {
+            const method = this.forms.department.id ? 'PUT' : 'POST';
+            const path = this.forms.department.id ? `/api/departments/${this.forms.department.id}` : '/api/departments';
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.department) });
+                this.forms.department = { id: null, name: '', parentId: null, roleIds: [] };
+                await this.loadDepartments();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '部门已创建。' : '部门信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存部门失败。'), 'error');
+            }
+        },
+        async deleteDepartment(id) {
+            if (!confirm('确认删除该部门？')) {
+                return;
+            }
+            try {
+                await this.api(`/api/departments/${id}`, { method: 'DELETE' });
+                await this.loadDepartments();
+                await this.loadLogs();
+                this.showFlash('部门已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除部门失败。'), 'error');
+            }
+        },
+        editRole(role) {
+            this.forms.role = {
+                id: role.id,
+                code: role.code,
+                name: role.name,
+                description: role.description,
+                permissionIds: role.permissions.map(permission => permission.id)
+            };
+        },
+        async saveRole() {
+            const method = this.forms.role.id ? 'PUT' : 'POST';
+            const path = this.forms.role.id ? `/api/roles/${this.forms.role.id}` : '/api/roles';
+            try {
+                await this.api(path, { method, body: JSON.stringify(this.forms.role) });
+                this.forms.role = { id: null, code: '', name: '', description: '', permissionIds: [] };
+                await this.loadRoles();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '角色已创建。' : '角色信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存角色失败。'), 'error');
+            }
+        },
+        async deleteRole(id) {
+            if (!confirm('确认删除该角色？')) {
+                return;
+            }
+            try {
+                await this.api(`/api/roles/${id}`, { method: 'DELETE' });
+                await this.loadRoles();
+                await this.loadLogs();
+                this.showFlash('角色已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除角色失败。'), 'error');
+            }
+        },
+        editApp(app) {
+            this.forms.app = {
+                id: app.id,
+                clientId: app.clientId,
+                clientName: app.clientName,
+                clientSecret: '',
+                redirectUrisText: app.redirectUris.join(','),
+                postLogoutRedirectUrisText: app.postLogoutRedirectUris.join(','),
+                scopesText: app.scopes.join(','),
+                grantTypesText: app.grantTypes.join(','),
+                authenticationMethodsText: app.authenticationMethods.join(','),
+                requireProofKey: app.requireProofKey,
+                authorizationCodeTtlMinutes: app.authorizationCodeTtlMinutes,
+                accessTokenTtlMinutes: app.accessTokenTtlMinutes,
+                refreshTokenTtlMinutes: app.refreshTokenTtlMinutes,
+                reuseRefreshTokens: app.reuseRefreshTokens
+            };
+        },
+        async saveApp() {
+            const payload = {
+                clientId: this.forms.app.clientId,
+                clientName: this.forms.app.clientName,
+                clientSecret: this.forms.app.clientSecret,
+                redirectUris: this.parseList(this.forms.app.redirectUrisText),
+                postLogoutRedirectUris: this.parseList(this.forms.app.postLogoutRedirectUrisText),
+                scopes: this.parseList(this.forms.app.scopesText),
+                grantTypes: this.parseList(this.forms.app.grantTypesText),
+                authenticationMethods: this.parseList(this.forms.app.authenticationMethodsText),
+                requireProofKey: this.forms.app.requireProofKey,
+                requireAuthorizationConsent: false,
+                authorizationCodeTtlMinutes: Number(this.forms.app.authorizationCodeTtlMinutes),
+                accessTokenTtlMinutes: Number(this.forms.app.accessTokenTtlMinutes),
+                refreshTokenTtlMinutes: Number(this.forms.app.refreshTokenTtlMinutes),
+                reuseRefreshTokens: this.forms.app.reuseRefreshTokens,
+                active: true
+            };
+            const method = this.forms.app.id ? 'PUT' : 'POST';
+            const path = this.forms.app.id ? `/api/apps/${this.forms.app.id}` : '/api/apps';
+            try {
+                await this.api(path, { method, body: JSON.stringify(payload) });
+                this.forms.app = {
+                    id: null,
+                    clientId: '',
+                    clientName: '',
+                    clientSecret: '',
+                    redirectUrisText: '',
+                    postLogoutRedirectUrisText: '',
+                    scopesText: 'openid,profile',
+                    grantTypesText: 'authorization_code,refresh_token',
+                    authenticationMethodsText: 'client_secret_basic',
+                    requireProofKey: true,
+                    authorizationCodeTtlMinutes: 5,
+                    accessTokenTtlMinutes: 30,
+                    refreshTokenTtlMinutes: 480,
+                    reuseRefreshTokens: false
+                };
+                await this.loadApps();
+                await this.loadLogs();
+                this.showFlash(method === 'POST' ? '客户端已创建。' : '客户端信息已更新。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '保存客户端失败。'), 'error');
+            }
+        },
+        async deleteApp(id) {
+            if (!confirm('确认删除该应用客户端？')) {
+                return;
+            }
+            try {
+                await this.api(`/api/apps/${id}`, { method: 'DELETE' });
+                await this.loadApps();
+                await this.loadLogs();
+                this.showFlash('客户端已删除。');
+            } catch (error) {
+                this.showFlash(this.formatError(error, '删除客户端失败。'), 'error');
+            }
+        },
+        formatTime(value) {
+            return value ? new Date(value).toLocaleString('zh-CN') : '-';
+        }
+    },
+    async mounted() {
+        try {
+            await this.loadAll();
+        } catch (error) {
+            this.showFlash(this.formatError(error, '加载管理台数据失败。'), 'error');
+        }
+    },
+    watch: {
+        filteredLogs() {
+            this.syncPage('logs', this.filteredLogs);
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>

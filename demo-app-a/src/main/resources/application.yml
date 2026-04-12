@@ -1,0 +1,32 @@
+server:
+  port: 8081
+  servlet:
+    session:
+      cookie:
+        name: DEMO_APP_A_SESSION
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          iam:
+            authorization-uri: http://127.0.0.1:8080/oauth2/authorize
+            token-uri: http://127.0.0.1:8080/oauth2/token
+            jwk-set-uri: http://127.0.0.1:8080/oauth2/jwks
+            user-info-uri: http://127.0.0.1:8080/userinfo
+            user-name-attribute: sub
+        registration:
+          iam:
+            provider: iam
+            client-id: app-a
+            client-secret: ${IAM_CLIENT_SECRET_APP_A:AppA#2026!ClientSecret}
+            scope:
+              - openid
+              - profile
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+app:
+  security:
+    iam-logout-uri: http://127.0.0.1:8080/logout

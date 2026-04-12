@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo App A</title>
+    <meta name="description" content="Demo App A 用于展示 IAM 首次授权、PKCE 接入结果、角色权限解释和完整 OIDC Claims。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: oklch(0.986 0.004 240);
+            --surface: oklch(0.998 0.002 240 / 0.96);
+            --surface-strong: oklch(0.972 0.008 232);
+            --line: oklch(0.892 0.014 234);
+            --ink: oklch(0.2 0.03 255);
+            --ink-soft: oklch(0.45 0.02 245);
+            --teal: oklch(0.48 0.11 240);
+            --teal-deep: oklch(0.3 0.07 246);
+            --clay: oklch(0.74 0.1 84);
+            --glass: rgba(255, 255, 255, 0.1);
+            --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 8% 8%, oklch(0.93 0.04 235 / 0.75), transparent 24%),
+                radial-gradient(circle at 92% 12%, oklch(0.95 0.06 84 / 0.28), transparent 18%),
+                linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.05) calc(100% - 1px)),
+                linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.045) calc(100% - 1px));
+            background-size: 88px 88px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.24), transparent 72%);
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto 0 0;
+            height: 42vh;
+            pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.5));
+        }
+
+        .page {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 22px 16px 38px;
+        }
+
+        .hero,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            animation: rise .7s ease-out both;
+        }
+
+        .hero {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: minmax(0, 1.16fr) minmax(340px, .84fr);
+            padding: clamp(20px, 2.7vw, 32px);
+            border-radius: 30px;
+            background:
+                linear-gradient(135deg, oklch(0.26 0.05 250), oklch(0.34 0.07 238) 56%, oklch(0.4 0.08 220) 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+            color: oklch(0.976 0.006 95);
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -8%;
+            bottom: -28%;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 64%);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            align-content: start;
+            gap: 18px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            font-family: "Lexend", sans-serif;
+            font-size: 12px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin: 12px 0 0;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(2.2rem, 3.5vw, 4rem);
+            line-height: 1.05;
+            max-width: 11ch;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 56ch;
+            color: rgba(248, 244, 238, 0.84);
+            line-height: 1.7;
+        }
+
+        .hero-proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 2px;
+        }
+
+        .hero-proof-card {
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-proof-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(241, 246, 255, 0.66);
+        }
+
+        .hero-proof-card strong {
+            display: block;
+            margin-top: 8px;
+            font: 700 1rem/1.3 "Lexend", sans-serif;
+        }
+
+        .hero-proof-card p {
+            margin-top: 8px;
+            color: rgba(244, 247, 255, 0.78);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .button-row,
+        .signal-list,
+        .summary-grid,
+        .glossary-grid,
+        .explain-grid,
+        .token-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .button-row {
+            margin-top: 16px;
+        }
+
+        .section-nav {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0 0;
+        }
+
+        .anchor-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(134, 100, 61, 0.12);
+            color: var(--ink);
+            text-decoration: none;
+            font: 700 13px/1 "Lexend", sans-serif;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: none;
+            text-decoration: none;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+        .btn-light { background: oklch(0.95 0.018 90); color: var(--ink); }
+        .btn-ghost { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 249, 240, 0.28); color: oklch(0.972 0.008 95); }
+
+        .hero-side {
+            position: relative;
+            z-index: 1;
+            padding: 18px;
+            border-radius: 24px;
+            background: rgba(255, 252, 247, 0.08);
+            border: 1px solid rgba(255, 250, 243, 0.18);
+            display: grid;
+            gap: 14px;
+            align-content: start;
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-side h2 {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.2rem;
+        }
+
+        .session-compact {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, rgba(255, 252, 247, 0.92) 86%, white);
+            border: 1px solid rgba(255, 250, 243, 0.18);
+            color: var(--ink);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
+        }
+
+        .session-compact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .session-compact-title {
+            margin: 0;
+            font: 700 1rem/1.2 "Lexend", sans-serif;
+        }
+
+        .session-compact-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 12%, white);
+            color: var(--teal-deep);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .04em;
+        }
+
+        .session-compact-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .session-compact-item {
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            border: 1px solid rgba(134, 100, 61, 0.1);
+        }
+
+        .session-compact-item span {
+            display: block;
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+
+        .session-compact-item strong {
+            display: block;
+            margin-top: 6px;
+            font: 700 1rem/1.35 "Lexend", sans-serif;
+            word-break: break-word;
+        }
+
+        .signal {
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 250, 243, 0.12);
+        }
+
+        .signal:last-child { border-bottom: 0; padding-bottom: 0; }
+        .signal-label {
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(255, 247, 237, 0.68);
+        }
+
+        .signal strong {
+            display: block;
+            margin-top: 6px;
+            line-height: 1.55;
+        }
+
+        .layout {
+            margin-top: 20px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .panel {
+            padding: 20px;
+            border-radius: 26px;
+            background: var(--surface);
+            border: 1px solid rgba(134, 100, 61, 0.14);
+            box-shadow: 0 16px 50px rgba(75, 50, 18, 0.08);
+            backdrop-filter: blur(14px);
+            scroll-margin-top: 24px;
+        }
+
+        .panel-kicker {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            margin-bottom: 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 10%, white);
+            color: var(--teal-deep);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .panel-head h2 {
+            margin: 0;
+            font-family: "Lexend", sans-serif;
+            font-size: 1.32rem;
+        }
+
+        .panel-head p {
+            margin: 6px 0 0;
+            color: var(--ink-soft);
+            line-height: 1.72;
+            max-width: 65ch;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+        }
+
+        .summary-card,
+        .glossary-item,
+        .token-card {
+            border-radius: 22px;
+            padding: 16px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 250, 255, 0.96)),
+                color-mix(in oklch, var(--surface-strong) 88%, white);
+            border: 1px solid rgba(134, 100, 61, 0.12);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .glossary-item:hover,
+        .token-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(72, 124, 255, 0.18);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        }
+
+        .summary-card .label {
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .summary-card .value {
+            margin-top: 14px;
+            font-family: "Lexend", sans-serif;
+            font-size: clamp(1.35rem, 2vw, 2.2rem);
+            line-height: 1.1;
+            word-break: break-word;
+        }
+
+        .summary-card .note {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .glossary-item strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .glossary-item p,
+        .token-card p {
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        .explain-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .token-column {
+            display: grid;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .token-scroll {
+            max-height: 400px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .token-column h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .token-card h4 {
+            margin: 0 0 8px;
+            font-size: .98rem;
+            line-height: 1.55;
+        }
+
+        .token-meta {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            margin-top: 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: color-mix(in oklch, var(--teal) 12%, white);
+            color: var(--teal-deep);
+        }
+
+        .token-meta.alt {
+            background: color-mix(in oklch, var(--clay) 12%, white);
+            color: oklch(0.43 0.08 42);
+        }
+
+        .empty {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 82%, white);
+            color: var(--ink-soft);
+        }
+
+        .pager {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(134, 100, 61, 0.12);
+        }
+
+        .pager-status {
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+
+        .pager-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .pager-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            min-height: 38px;
+            padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(134, 100, 61, 0.12);
+            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .pager-btn.active {
+            background: var(--ink);
+            color: oklch(0.98 0.004 95);
+            border-color: var(--ink);
+        }
+
+        .pager-btn[disabled] {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            border-radius: 22px;
+            overflow: auto;
+            background: oklch(0.24 0.02 55);
+            color: oklch(0.94 0.01 95);
+            font: 13px/1.7 "Source Sans 3", monospace;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .error {
+            display: none;
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: color-mix(in oklch, oklch(0.58 0.17 28) 12%, white);
+            color: oklch(0.44 0.16 28);
+            border: 1px solid color-mix(in oklch, oklch(0.58 0.17 28) 20%, white);
+        }
+
+        .error.show { display: block; }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1080px) {
+            .hero,
+            .explain-grid,
+            .hero-proof-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page { padding: 14px 12px 28px; }
+            .hero,
+            .panel { padding: 18px; border-radius: 22px; }
+            .panel-head { flex-direction: column; align-items: stretch; }
+            .btn { width: 100%; }
+            .anchor-chip { width: 100%; justify-content: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+</style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <div class="hero-copy">
+            <div class="eyebrow">SSO Evidence Surface</div>
+            <h1>Demo App A 展示首次授权与权限上下文</h1>
+            <p>这个页面重点用于演示第一跳客户端如何通过 Authorization Code + PKCE 接入 IAM，并把登录后拿到的角色、权限、Spring Authorities 和完整 Claims 直接摊开给答辩老师看。</p>
+            <div class="button-row">
+                <a class="btn btn-light" href="http://127.0.0.1:8082/">跳转 Demo App B</a>
+                <a class="btn btn-ghost" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
+                <a class="btn btn-ghost" href="/logout">单点退出</a>
+            </div>
+            <div class="hero-proof-grid">
+                <article class="hero-proof-card">
+                    <span>首跳授权</span>
+                    <strong>PKCE 接入证据</strong>
+                    <p>证明首个业务客户端已经走通标准 OAuth2 授权码流程，并拿到可用身份结果。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>运行时判权</span>
+                    <strong>角色、权限与 Authority 对齐</strong>
+                    <p>把后台治理模型和 Spring Security 运行时授权串直接放到同一个画面里解释。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>答辩视角</span>
+                    <strong>Claims 全量摊开</strong>
+                    <p>让“拿到身份上下文”和“系统如何消费身份”两件事在首屏后自然衔接。</p>
+                </article>
+            </div>
+        </div>
+        <aside class="hero-side">
+            <div class="session-compact">
+                <div class="session-compact-header">
+                    <h2 class="session-compact-title">当前登录会话</h2>
+                    <span class="session-compact-badge" id="appName">-</span>
+                </div>
+                <div class="session-compact-meta">
+                    <div class="session-compact-item">
+                        <span>用户名</span>
+                        <strong id="username">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>邮箱</span>
+                        <strong id="email">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>角色数</span>
+                        <strong id="roleCount">-</strong>
+                    </div>
+                    <div class="session-compact-item">
+                        <span>权限数</span>
+                        <strong id="permissionCount">-</strong>
+                    </div>
+                    <div class="session-compact-item" style="grid-column: 1 / -1;">
+                        <span>会话有效至</span>
+                        <strong id="expiresAt">-</strong>
+                    </div>
+                </div>
+            </div>
+            <h2>本页讲解重点</h2>
+            <div class="signal-list">
+                <div class="signal">
+                    <div class="signal-label">认证链路</div>
+                    <strong>OAuth2 Authorization Code + PKCE，首个业务系统完成授权。</strong>
+                </div>
+                <div class="signal">
+                    <div class="signal-label">身份上下文</div>
+                    <strong>角色与权限来自 IAM Claims，Authorities 是 Spring Security 的运行时判断结果。</strong>
+                </div>
+                <div class="signal">
+                    <div class="signal-label">答辩话术</div>
+                    <strong>Role 决定身份包，Permission 决定最小动作，Authority 决定代码里如何判权。</strong>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <nav class="section-nav" aria-label="页面导航">
+        <a class="anchor-chip" href="#glossary">概念词典</a>
+        <a class="anchor-chip" href="#explainer">身份解释器</a>
+        <a class="anchor-chip" href="#claims">完整 Claims</a>
+    </nav>
+
+    <div id="error" class="error"></div>
+
+    <section class="layout">
+        <article class="panel" id="glossary">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-kicker">Concept Map</div>
+                    <h2>概念词典</h2>
+                    <p>把容易被混用的几个词拆开，便于现场说明“为什么 Claims 里有角色和权限，而代码里判断的是 Authority”。</p>
+                </div>
+            </div>
+            <div class="glossary-grid">
+                <div class="glossary-item"><strong>角色 Role</strong><p>角色是业务身份包，例如系统管理员、审计员。它通常代表一个岗位或职责集合。</p></div>
+                <div class="glossary-item"><strong>权限 Permission</strong><p>权限是最小动作单元，例如用户查询、应用写入、访问某个客户端。它回答“能做什么”。</p></div>
+                <div class="glossary-item"><strong>Spring Authorities</strong><p>Authority 是 Spring Security 运行期真正参与判权的字符串，例如 <code>ROLE_ADMIN</code>、<code>SCOPE_openid</code>。</p></div>
+                <div class="glossary-item"><strong>Claims</strong><p>Claims 是 IAM 写入 OIDC 身份上下文的数据集合，客户端可用它渲染页面，也可进一步映射为本地授权信息。</p></div>
+            </div>
+        </article>
+
+        <article class="panel" id="explainer">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-kicker">Runtime View</div>
+                    <h2>身份解释器</h2>
+                    <p>下方每一项都带中文说明，避免页面只剩英文编码，看不出背后的业务含义。</p>
+                </div>
+                <button class="btn btn-light" type="button" onclick="loadSession()">刷新数据</button>
+            </div>
+            <div class="explain-grid">
+                <section class="token-column">
+                    <h3>角色 Roles</h3>
+                    <div id="roles"></div>
+                </section>
+                <section class="token-column">
+                    <h3>权限 Permissions</h3>
+                    <div id="permissions" class="token-scroll"></div>
+                </section>
+                <section class="token-column">
+                    <h3>Spring Authorities</h3>
+                    <div id="authorities"></div>
+                </section>
+            </div>
+        </article>
+
+        <article class="panel" id="claims">
+            <div class="panel-head">
+                <div>
+                    <div class="panel-kicker">Token Payload</div>
+                    <h2>完整 Claims</h2>
+                    <p>这里展示 OIDC User 里返回的全部 Claims，便于直接证明客户端已经拿到了角色、权限和基本身份属性。</p>
+                </div>
+            </div>
+            <pre id="claimsBox">加载中...</pre>
+        </article>
+    </section>
+</main>
+
+<script>
+function setText(id, value) {
+    document.getElementById(id).textContent = value || '-';
+}
+
+function formatTime(value) {
+    return value ? new Date(value).toLocaleString('zh-CN') : '-';
+}
+
+function roleMeaning(code) {
+    const map = {
+        ADMIN: '系统管理员：拥有后台全量治理能力，可管理用户、部门、角色、应用和审计信息。',
+        ENGINEER: '研发工程师：用于访问研发侧业务应用，通常承接基础应用访问权限。',
+        AUDITOR: '审计员：聚焦查看审计记录与追踪关键行为。'
+    };
+    return map[code] || `业务角色 ${code}：代表一组岗位职责，会进一步聚合多个权限。`;
+}
+
+function permissionMeaning(code) {
+    const map = {
+        USER_READ: '用户查询：允许读取用户列表与用户详情。',
+        USER_WRITE: '用户写入：允许创建、编辑、删除用户以及修改状态。',
+        DEPARTMENT_READ: '部门查询：允许查看组织树和部门信息。',
+        DEPARTMENT_WRITE: '部门写入：允许维护部门结构与部门角色。',
+        ROLE_READ: '角色查询：允许读取角色与其权限聚合结果。',
+        ROLE_WRITE: '角色写入：允许新建、更新、删除角色。',
+        APP_READ: '应用查询：允许读取 OAuth2 客户端注册配置。',
+        APP_WRITE: '应用写入：允许新增或修改客户端配置。',
+        AUDIT_READ: '审计日志查询：允许查看认证与后台操作审计。',
+        APP_A_ACCESS: '访问 Demo App A：表示该用户可以作为客户端 A 的受权主体进入系统。',
+        APP_B_ACCESS: '访问 Demo App B：表示该用户也具备进入客户端 B 的资格。'
+    };
+    return map[code] || `权限 ${code}：系统里的最小动作单元，用来表达具体可执行能力。`;
+}
+
+function authorityMeaning(value) {
+    if (value === 'OIDC_USER') {
+        return '当前主体已被 Spring Security 识别为 OIDC 登录用户，说明认证来源是 OpenID Connect。';
+    }
+    if (value.startsWith('ROLE_')) {
+        const roleCode = value.slice(5);
+        return `角色 Authority：由角色 ${roleCode} 映射而来，代码里可通过 hasRole('${roleCode}') 判断。`;
+    }
+    if (value.startsWith('PERM_')) {
+        const permissionCode = value.slice(5);
+        return `权限 Authority：由权限 ${permissionCode} 映射而来，代码里可通过 hasAuthority('${value}') 判断。`;
+    }
+    if (value.startsWith('SCOPE_')) {
+        const scope = value.slice(6);
+        const scopeText = {
+            openid: '允许客户端发起 OpenID Connect 身份认证流程。',
+            profile: '允许客户端读取用户的基础身份资料。'
+        };
+        return `OAuth2 Scope：${scopeText[scope] || `客户端被授予 ${scope} 范围的访问能力。`}`;
+    }
+    return `Authority ${value}：Spring Security 运行期可识别的一条授权信息。`;
+}
+
+const tokenPaging = {
+    roles: { page: 1, size: 4 },
+    permissions: { page: 1, size: 4 },
+    authorities: { page: 1, size: 4 }
+};
+
+function pagerNumbers(total, current) {
+    if (total <= 5) {
+        return Array.from({ length: total }, (_, index) => index + 1);
+    }
+    if (current <= 3) {
+        return [1, 2, 3, 4, '...', total];
+    }
+    if (current >= total - 2) {
+        return [1, '...', total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
+function renderExplainList(id, values, resolver, tone) {
+    const host = document.getElementById(id);
+    host.innerHTML = '';
+    const list = Array.isArray(values) ? values : [];
+    if (!list.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = '当前没有可展示的数据。';
+        host.appendChild(empty);
+        return;
+    }
+
+    const state = tokenPaging[id] || { page: 1, size: 4 };
+    tokenPaging[id] = state;
+    const totalPages = Math.max(1, Math.ceil(list.length / state.size));
+    state.page = Math.min(state.page, totalPages);
+    const start = (state.page - 1) * state.size;
+    const visible = list.slice(start, start + state.size);
+
+    visible.forEach(value => {
+        const card = document.createElement('article');
+        card.className = 'token-card';
+
+        const title = document.createElement('h4');
+        title.textContent = value;
+
+        const desc = document.createElement('p');
+        desc.textContent = resolver(value);
+
+        const tag = document.createElement('span');
+        tag.className = 'token-meta' + (tone === 'alt' ? ' alt' : '');
+        tag.textContent = tone === 'alt' ? '最小能力 / 运行时授权' : '身份语义说明';
+
+        card.appendChild(title);
+        card.appendChild(desc);
+        card.appendChild(tag);
+        host.appendChild(card);
+    });
+
+    if (totalPages > 1) {
+        const pager = document.createElement('div');
+        pager.className = 'pager';
+
+        const status = document.createElement('div');
+        status.className = 'pager-status';
+        status.textContent = `共 ${list.length} 条，当前第 ${state.page} / ${totalPages} 页`;
+
+        const actions = document.createElement('div');
+        actions.className = 'pager-actions';
+
+        const previous = document.createElement('button');
+        previous.className = 'pager-btn';
+        previous.textContent = '上一页';
+        previous.disabled = state.page === 1;
+        previous.onclick = () => {
+            state.page -= 1;
+            renderExplainList(id, values, resolver, tone);
+        };
+        actions.appendChild(previous);
+
+        pagerNumbers(totalPages, state.page).forEach((page) => {
+            if (page === '...') {
+                const dots = document.createElement('span');
+                dots.className = 'pager-status';
+                dots.textContent = '...';
+                actions.appendChild(dots);
+                return;
+            }
+            const button = document.createElement('button');
+            button.className = 'pager-btn' + (page === state.page ? ' active' : '');
+            button.textContent = String(page);
+            button.onclick = () => {
+                state.page = page;
+                renderExplainList(id, values, resolver, tone);
+            };
+            actions.appendChild(button);
+        });
+
+        const next = document.createElement('button');
+        next.className = 'pager-btn';
+        next.textContent = '下一页';
+        next.disabled = state.page === totalPages;
+        next.onclick = () => {
+            state.page += 1;
+            renderExplainList(id, values, resolver, tone);
+        };
+        actions.appendChild(next);
+
+        pager.appendChild(status);
+        pager.appendChild(actions);
+        host.appendChild(pager);
+    }
+}
+
+async function loadSession() {
+    const errorBox = document.getElementById('error');
+    errorBox.classList.remove('show');
+    try {
+        const response = await fetch('/api/session');
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        const session = await response.json();
+        setText('appName', session.title);
+        setText('username', session.username);
+        setText('email', session.email);
+        setText('expiresAt', formatTime(session.expiresAt));
+        setText('roleCount', Array.isArray(session.roles) ? session.roles.length : 0);
+        setText('permissionCount', Array.isArray(session.permissions) ? session.permissions.length : 0);
+        renderExplainList('roles', session.roles, roleMeaning, 'base');
+        renderExplainList('permissions', session.permissions, permissionMeaning, 'alt');
+        renderExplainList('authorities', session.authorities, authorityMeaning, 'alt');
+        document.getElementById('claimsBox').textContent = JSON.stringify(session.claims, null, 2);
+    } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.classList.add('show');
+        document.getElementById('claimsBox').textContent = '加载失败';
+    }
+}
+
+loadSession();
+</script>
+</body>
+</html>

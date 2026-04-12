@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo App A 已退出</title>
+    <meta name="description" content="Demo App A 单点退出完成页，展示本地会话清理、IAM 全局退出与下一步访问路径。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: oklch(0.986 0.004 240);
+            --surface: oklch(0.998 0.002 240 / 0.94);
+            --surface-strong: oklch(0.972 0.008 232);
+            --ink: oklch(0.2 0.03 255);
+            --ink-soft: oklch(0.45 0.02 245);
+            --teal: oklch(0.48 0.11 240);
+            --teal-deep: oklch(0.3 0.07 246);
+            --clay: oklch(0.74 0.1 84);
+            --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 18px;
+            font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 8% 8%, oklch(0.93 0.04 235 / 0.72), transparent 24%),
+                radial-gradient(circle at 92% 12%, oklch(0.95 0.06 84 / 0.3), transparent 18%),
+                linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.05) calc(100% - 1px)),
+                linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.045) calc(100% - 1px));
+            background-size: 88px 88px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 72%);
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1020px, 100%);
+            min-height: calc(100vh - 36px);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
+            gap: 18px;
+            align-items: center;
+        }
+
+        .hero,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero {
+            padding: 28px;
+            display: grid;
+            gap: 18px;
+            align-content: start;
+            min-height: 420px;
+            color: oklch(0.976 0.006 95);
+            background: linear-gradient(135deg, var(--teal-deep), var(--teal) 62%, var(--clay) 100%);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -10%;
+            bottom: -24%;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 66%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(248, 251, 255, 0.94);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            max-width: 9ch;
+            font: 700 clamp(2rem, 4vw, 3.2rem)/1.04 "Lexend", sans-serif;
+        }
+
+        p {
+            margin: 0;
+            max-width: 52ch;
+            color: rgba(241, 246, 255, 0.82);
+            line-height: 1.72;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .status-card {
+            padding: 16px;
+            border-radius: 22px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.16);
+        }
+
+        .status-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.68);
+        }
+
+        .status-card strong {
+            display: block;
+            margin-top: 8px;
+            font: 700 1rem/1.35 "Lexend", sans-serif;
+        }
+
+        .hero-note {
+            max-width: 58ch;
+            padding: 14px 16px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.08);
+            border: 1px solid rgba(248, 251, 255, 0.14);
+            line-height: 1.7;
+            color: rgba(241, 246, 255, 0.82);
+        }
+
+        .hero-note strong {
+            color: oklch(0.99 0.003 95);
+        }
+
+        .panel {
+            padding: 24px;
+            display: grid;
+            gap: 16px;
+            align-content: start;
+            background: var(--surface);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+        }
+
+        .panel h2 {
+            margin: 0;
+            font: 700 1.76rem/1.08 "Lexend", sans-serif;
+        }
+
+        .panel-copy {
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .tip {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 92%, white);
+            border: 1px solid rgba(71, 85, 105, 0.08);
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .tip strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--ink);
+            font-family: "Lexend", sans-serif;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            background: rgba(255, 255, 255, 0.78);
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform .18s ease, border-color .18s ease, background-color .18s ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); }
+
+        .btn.primary {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: oklch(0.98 0.004 95);
+        }
+
+        @media (max-width: 960px) {
+            .shell,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shell {
+                min-height: auto;
+            }
+
+            .hero {
+                min-height: 0;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .hero,
+            .panel {
+                padding: 20px;
+                border-radius: 24px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="shell">
+    <section class="hero">
+        <div class="eyebrow">Demo App A</div>
+        <h1>单点退出已经完成</h1>
+        <p>Demo App A 的本地会话已经结束，并且已经向 IAM 发出了全局退出请求。后续再次访问受保护页面时，浏览器会重新回到统一身份中心进行登录与授权。</p>
+        <section class="status-grid" aria-label="退出状态摘要">
+            <article class="status-card">
+                <span>本地状态</span>
+                <strong>客户端会话已清理</strong>
+            </article>
+            <article class="status-card">
+                <span>统一身份</span>
+                <strong>IAM 全局登录态已回收</strong>
+            </article>
+            <article class="status-card">
+                <span>后续行为</span>
+                <strong>重新访问会触发完整登录流</strong>
+            </article>
+        </section>
+        <div class="hero-note"><strong>SLO 讲解点：</strong>这一页强调“本地会话结束 + 全局会话回收 + 其他客户端收到退出指令”，让单点退出链路在投屏演示时更完整、更有说服力。</div>
+    </section>
+    <section class="panel">
+        <div>
+            <h2>下一步怎么走</h2>
+            <p class="panel-copy">如果你继续打开受保护页面，系统会重新发起统一登录与授权流程。这也正好可以用来展示 SSO/SLO 的完整闭环。</p>
+        </div>
+        <div class="tip">
+            <strong>重新进入 Demo App A</strong>
+            重新触发首个业务客户端的登录与授权流程，适合从头演示 PKCE 与首次授权。
+        </div>
+        <div class="tip">
+            <strong>切到 Demo App B</strong>
+            可以继续讲解第二个接入方如何参与统一登录与统一退出链路。
+        </div>
+        <div class="tip">
+            <strong>回到 IAM 管理台</strong>
+            适合补充讲解用户、角色、权限和客户端配置如何支撑这条认证链路。
+        </div>
+        <div class="actions">
+            <a class="btn primary" href="/">重新进入 Demo App A</a>
+            <a class="btn" href="http://127.0.0.1:8082/">前往 Demo App B</a>
+            <a class="btn" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
+        </div>
+    </section>
+</main>
+</body>
+</html>

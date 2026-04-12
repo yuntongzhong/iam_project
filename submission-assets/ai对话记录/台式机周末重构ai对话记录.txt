@@ -1,0 +1,352 @@
+1、无权限用户登录iam控制台，应该向用户展示一个优雅的 403 无权限提示页面，绝不泄露底层的报错堆栈。同时，前端也会根据角色动态隐藏掉敏感的管理菜单。
+2、iam控制台、客户端A和B需要在顶部卡片显示当前登录用户信息（会话摘要），设计紧凑一些，原来客户端A和B的会话摘要移除。
+3、iam控制台里的部门拓扑、角色编排、权限词典改为瀑布流排列。
+
+
+
+这轮已经收完，并且 ./gradlew.bat build 已通过。
+
+现在的结果是：
+
+IAM 控制台对无权限用户会走自定义 403 页，不再暴露底层异常或堆栈；API 场景返回干净的 JSON 提示。相关改动在 FriendlyAccessDeniedHandler.java (line 14) 和 SecurityConfig.java (line 90)。
+IAM 控制台顶部已经有紧凑会话摘要，并且按角色/权限动态隐藏敏感菜单和管理区块；部门拓扑、角色编排、权限词典也已经改成瀑布流展示。改动在 admin.html (line 972)。
+控制台会话摘要数据来自新的会话接口，包含用户名、部门、角色、权限等信息，改动在 HomeController.java (line 27)。
+客户端 A 和 B 这边，原来的大块“当前会话摘要”已经移除，改成顶部紧凑卡片，展示当前登录用户、邮箱、角色数、权限数和会话有效期。改动在 demo-app-a/index.html (line 497) 和 demo-app-b/index.html (line 495)。
+
+目前唯一保留的是一个旧的 Spring Security 弃用警告，来自 SecurityConfig.java (line 105) 里的 AntPathRequestMatcher，不影响这次功能和打包结果。
+
+
+13 个文件已更改
++682
+-170
+撤销
+iam-server/src/main/java/com/example/iam/config/SecurityConfig.java
+iam-server/src/main/java/com/example/iam/security/FriendlyAccessDeniedHandler.java
+iam-server/src/main/java/com/example/iam/web/HomeController.java
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+demo-app-a/src/main/resources/static/index.html
+demo-app-b/src/main/resources/static/index.html
+新增一键打包命令
+
+
+
+上 15 条消息
+一键打包命令已经加好了，并且我已经实际跑通。
+
+你现在可以直接用：
+package.cmd
+
+对应的 PowerShell 脚本是：
+package.ps1
+
+它会自动复用现有的 Java 兼容处理，然后执行 Gradle 打包，并把三个产物路径直接打印出来。还支持两个可选参数：
+package.cmd -Clean
+package.cmd -SkipTests
+
+文档我也补到了 README.md。我刚刚已经验证过，新命令能成功执行，当前产物是：
+iam-server-0.0.1-SNAPSHOT.jar
+demo-app-a-0.0.1-SNAPSHOT.jar
+demo-app-b-0.0.1-SNAPSHOT.jar
+
+
+3 个文件已更改
++61
+-7
+撤销
+README.md
+scripts/package.cmd
+scripts/package.ps1
+使用 UI Ux Pro Max 对所有前端页面进行规范设计检查，使用mcp chrome-devtools-mcp 进行页面调试检查。让整体视觉效果再提升一个档次。
+
+
+
+上 260 条消息
+按 UI Ux Pro Max 的规范，我用 Chrome DevTools MCP 对登录页、MFA、IAM 控制台、客户端 A/B 和退出页做了实页巡检，并补了一轮结构语义和视觉统一。
+
+这次主要收了三块。第一，IAM 控制台和客户端 A/B 补齐了 main landmark、meta description、可访问的刷新按钮语义，并把控制台里权限词典 / Authority 说明的标题层级修正了，所以 Lighthouse 的结构类问题已经清空。改动在 admin.html (line 7)、admin.html (line 1018)、admin.html (line 1435)、demo-app-a/index.html (line 7)、demo-app-a/index.html (line 599)、demo-app-a/index.html (line 707)、demo-app-b/index.html (line 7)、demo-app-b/index.html (line 597)、demo-app-b/index.html (line 705)。
+
+第二，两个退出页不再是小而空的单卡片，而是升级成和主流程同一视觉语言的双栏舞台版式，投屏演示时会更完整。改动在 demo-app-a/signed-out.html (line 7)、demo-app-a/signed-out.html (line 252)、demo-app-b/signed-out.html (line 7)、demo-app-b/signed-out.html (line 252)。
+
+第三，登录、MFA、403、SLO 这些链路页也补了页面描述信息，前后体验更统一。相关位置在 LoginController.java (line 61)、MfaController.java (line 146)、FriendlyAccessDeniedHandler.java (line 37)、SingleLogoutController.java (line 32)。
+
+我已经重新执行 ./gradlew.bat build，并重启了服务；8080/8081/8082 现在都正常。DevTools 最终审计结果是：IAM 控制台 100 / 100 / 100，Demo App A 100 / 100 / 100，Demo App B 100 / 100 / 100。报告在 lighthouse-admin-final/report.html、lighthouse-a-final/report.html、lighthouse-b-final/report.html。
+
+还留着一个旧警告： SecurityConfig.java (line 105) 的 AntPathRequestMatcher 仍是弃用项，但不影响这轮前端结果。
+
+
+29 个文件已更改
++2444
+-594
+撤销
+demo-app-a/src/main/resources/static/index.html
+demo-app-b/src/main/resources/static/index.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+iam-server/src/main/resources/static/admin.html
+demo-app-a/src/main/resources/static/signed-out.html
+demo-app-b/src/main/resources/static/signed-out.html
+iam-server/src/main/java/com/example/iam/web/LoginController.java
+iam-server/src/main/java/com/example/iam/web/LoginController.java
+iam-server/src/main/java/com/example/iam/web/MfaController.java
+iam-server/src/main/java/com/example/iam/web/MfaController.java
+iam-server/src/main/java/com/example/iam/security/FriendlyAccessDeniedHandler.java
+iam-server/src/main/java/com/example/iam/web/SingleLogoutController.java
+iam-server/src/main/java/com/example/iam/web/SingleLogoutController.java
+iam-server/src/main/java/com/example/iam/security/PostMfaRedirectResolver.java
+iam-server/src/test/java/com/example/iam/security/PostMfaRedirectResolverTest.java
+demo-app-a/src/main/resources/static/index.html
+demo-app-b/src/main/resources/static/index.html
+iam-server/src/main/java/com/example/iam/security/FriendlyAccessDeniedHandler.java
+iam-server/src/main/java/com/example/iam/web/LoginController.java
+iam-server/src/main/java/com/example/iam/web/MfaController.java
+iam-server/src/main/java/com/example/iam/web/SingleLogoutController.java
+iam-server/src/main/resources/static/admin.html
+demo-app-a/src/main/resources/static/signed-out.html
+demo-app-b/src/main/resources/static/signed-out.html
+1、修复退出登录后显示不对的链路逻辑。
+2、IAM控制台页面，部门拓扑和角色编排高度调整为一致。权限词典和Authority 映射说明调整为同一行显示，各占50%宽度，高度一致。
+16:02
+
+
+
+已处理 9m 11s
+已修好，两项都落地了。
+
+退出链路这次不是简单改跳转地址，而是把根因一起处理了。IAM 控制台退出现在会先正常走 SLO 中转，再稳定落到新的 IAM 退出结果页 /logged-out，不再回到看起来像中间态的错误页面。顺手还修了中转页里那个真正的 bug：之前 SingleLogoutController 用 String.formatted(...) 拼整页 HTML，CSS 里的 % 会把中转页直接格式化炸掉，所以才会出现“显示不对”的链路。相关改动在 SingleLogoutController.java (line 255)、SingleLogoutController.java (line 279)、SingleLogoutController.java (line 513)、SingleLogoutController.java (line 564)、SecurityConfig.java (line 98)。我已经用 DevTools 实测，从控制台点“退出登录”后，最终页会正确到 http://127.0.0.1:8080/logged-out。
+
+IAM 控制台布局也按你的要求改了。部门拓扑和角色编排现在在同一行对齐，面板高度按同一网格规则一致；权限词典和 Authority 映射说明也改成同一行各占 50%，并保持同一行等高；应用客户端注册则落到下一整行。样式和面板类在 admin.html (line 561)、admin.html (line 565)、admin.html (line 575)、admin.html (line 580)、admin.html (line 585)，结构落点在 admin.html (line 1339)、admin.html (line 1390)、admin.html (line 1459)、admin.html (line 1479)、admin.html (line 1569)。
+
+我已经重新 build 并用 start-services.ps1 拉起，8080/8081/8082 目前都在运行。还保留一个旧的非阻塞警告： SecurityConfig.java (line 105) 里的 AntPathRequestMatcher 仍然是弃用项，但不影响这次功能。
+
+
+16:11
+3 个文件已更改
++361
+-47
+撤销
+iam-server/src/main/java/com/example/iam/config/SecurityConfig.java
+iam-server/src/main/java/com/example/iam/web/SingleLogoutController.java
+iam-server/src/main/resources/static/admin.html
+
+题目.docx
+当前工作空间的项目是按照这个文档的题目：V05｜企业级 IAM 服务原型 制作的。
+根据题意和要求进行查缺补漏，务必拿到100分。
+16:45
+
+
+我先把题目文档和当前项目现状对齐，找出“题目要求里有、项目里还没有或还不够稳”的缺口，再把拿满分所需的补强项整理成可直接执行的方案。
+
+
+Ran 2 commands
+我已经拿到仓库结构了，下一步直接把 docx 解开读取正文要求，然后对照 README、后端配置和前端页面，把“已完成/未完成/做得不够稳”的部分归类出来。
+
+
+Ran 2 commands
+我已经看到 README 里有“评分项映射”，但还不够，因为真正的扣分点还是要以题目文档为准。接下来我直接把 docx 正文提出来，再把仓库里的能力清单跟文档要求一一对照。
+
+
+Ran 5 commands
+我已经拿到仓库里现有的“架构说明”和“答辩脚本”了，下一步把题目文档正文拉出来，看看它比当前实现还多要求了什么，尤其是评分口径、交付物、演示项和安全细节。
+
+
+Ran 2 commands
+我已经拿到题目原文了。现在最关键的差距不在“有没有 OAuth/MFA/RBAC”，而在满分口径里的几项细节，比如批量导入、异常检测案例、AI 使用记录、交付包材料组织这些。我先把这些高风险缺口逐项核一遍。
+
+
+Ran 3 commands
+背景信息已自动压缩
+我先把题目文档和当前实现逐项对照，重点补齐“会影响得分”的缺口，比如批量导入、协议细节、安全项和交付物完整性。接下来我会继续只做检查，不改代码，先把现状和缺口摸清，再给你一份可直接落地的 100 分冲刺方案。
+
+
+Ran 3 commands
+我继续往“协议得分”和“交付物得分”两侧深挖。现在要确认的是：OAuth2 安全细节有没有显式做到位，以及 AI 使用记录和交付材料能不能支撑答辩拿满分。
+
+
+Ran 9 commands
+我已经确认到一个高分风险点了：客户端现在只配置了 PKCE/Consent，但没有显式持久化或配置 access token / refresh token 的 TTL 策略，这会直接影响“协议合规 30 分”和“安全处理合理”。我再把客户端密钥、安全审计和 CRUD 侧补看一遍，这样计划里就不会留模糊地带。
+
+
+Ran 13 commands
+材料层面也看出来了：现在已经有 README、架构说明、演示脚本和 AI 说明，但离“答辩/交付可拿满分”还差最后一层规范化封装。接下来我把测试覆盖和明显缺项一起核对，最后给你的是一份按评分项拆开的补漏计划，而不是泛泛建议。
+
+
+Ran 4 commands
+当前实现的大框架其实已经很接近题目了：用户/部门/角色/权限、MFA、审计、SSO、管理台基本都在。现在真正可能丢分的，更像是“题目明确写了但还没做完整”或者“评委会追问的协议与交付细节”，我重点锁这两类。
+
+
+Ran 4 commands
+我又确认了一层：客户端页面其实已经把 expiresAt 展示出来了，所以“令牌过期”这件事不是完全没有，只是服务端没有显式定义和持久化策略，评委问深一点时会比较被动。另外，认证授权数据和签名密钥目前更偏演示态，也值得纳入补强计划。
+
+
+Ran 4 commands
+我这边已经把主缺口定位得比较清楚了，真正需要你拍板的只剩两个取舍，这样后面的执行就不会反复返工。一个是“批量导入”做到什么形态，另一个是我们要不要把答辩/提交材料也一起做成完整交付包。
+
+
+已询问 2 个问题
+你刚刚给的两个选择很清晰，这样后面的方案就能定了：我们按“CSV+预检”的批量导入做法来补，并且把代码与答辩包一起收口。现在我补最后一步基线检查，确认当前测试状态，再把完整实施方案给你。
+
+
+Ran 1 command
+已处理 5m 48s
+我发现了一个很值得补的评分点：题目写的登录审计是“谁、何时、从哪、登录什么”，而当前审计里“谁/何时/从哪”基本都有，“登录什么应用”这层还不够明确。这个如果不补，评委容易抓着问。
+
+已运行 rg -n "client_id|clientId|LOGIN_SUCCESS|LOGIN_FAILURE|LOGIN_LOCKED|oauth2/authorize|SavedRequest|authorization request|redirect_uri|app-a|app-b|客户端|应用" iam-server\src\main\java
+已运行 $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Raw -Encoding UTF8 iam-server\src\main\java\com\example\iam\security\AuditLogAspect.java
+已运行 $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Raw -Encoding UTF8 iam-server\src\main\java\com\example\iam\domain\AuditLog.java
+已运行 $OutputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new(); Get-Content -Raw -Encoding UTF8 iam-server\src\main\java\com\example\iam\web\dto\AuditLogResponse.java
+套餐
+
+
+
+V05｜企业级 IAM 100 分补漏计划
+摘要
+当前基线已经具备 OAuth2 授权码、MFA、SSO、RBAC、审计、管理台与 Demo 客户端，./gradlew.bat test 已通过。
+需要补齐的高分缺口集中在 4 件事：用户批量导入、协议/令牌策略显式化、审计“登录什么”信息完整化、答辩/提交包标准化。
+已按你的选择定稿：批量导入采用“CSV+预检”，交付范围采用“代码+答辩包”。
+实施变更
+用户目录补齐
+新增 CSV 批量导入能力，固定 UTF-8 模板头：username,email,phone,departmentPath,roleCodes,status,password。
+新增 GET /api/users/import/template 下载模板，POST /api/users/import/preview 做预检，POST /api/users/import/commit 做正式导入。
+导入规则固定为按 username upsert：新用户必须提供 password，已存在用户若 password 为空则保留原密码；departmentPath 用 总部/研发中心 形式解析；roleCodes 用逗号分隔角色编码；status 只允许 ACTIVE/DISABLED。
+commit 采用事务性全量提交：只要存在阻断错误则整批不落库；预检结果返回总数、成功数、警告数、错误数、逐行错误明细。
+管理台新增“下载模板/上传 CSV/预检结果/确认导入”入口，并把导入动作写入审计日志。
+协议与安全加固
+扩展 AppClient 配置与管理台，显式维护 authorizationCodeTtlMinutes、accessTokenTtlMinutes、refreshTokenTtlMinutes、reuseRefreshTokens，并映射到 Spring Authorization Server TokenSettings。
+种子客户端默认值固定为：授权码 5 分钟、Access Token 30 分钟、Refresh Token 480 分钟、reuseRefreshTokens=false、requireProofKey=true。
+将授权/同意存储从内存切换为 JDBC 持久化，补齐 SAS 所需表结构初始化，确保重启后授权记录与同意记录不丢。
+将 JWT 签名密钥改为“可配置且可复用”的文件化 JWK：优先读取环境变量路径，缺失时在 .runtime/keys 首次生成并复用，避免每次重启都更换签名密钥。
+Demo App 会话摘要继续展示 expiresAt，IAM 控制台应用管理区同步显示当前客户端 TTL 与 refresh 策略，便于答辩时直接说明“令牌过期策略”。
+审计与评分项闭环
+扩展审计模型与列表响应，新增 targetType、targetId、targetName、userAgent 字段，补齐“谁 / 何时 / 从哪 / 登录什么”。
+登录成功、失败、锁定事件从 Saved Request / client_id 中解析目标系统：访问控制台记为 IAM_CONSOLE，访问 OAuth 客户端记为 app-a / app-b。
+管理台审计列表新增目标系统列与筛选项，保留异常登录专用视图，确保可以直接展示“连续失败锁定”案例。
+补一个按评分项组织的说明文档，把“协议规范性 / 权限模型 / SSO / 工程质量”逐条映射到页面、接口、数据模型和演示步骤。
+交付与答辩包
+新增提交打包脚本 scripts/package-submission.(cmd|ps1)，负责构建 jar、汇总文档、拷贝证据目录，并生成 姓名-V05企业级IAM服务原型.zip；姓名通过参数传入，默认取当前系统用户名。
+交付目录固定包含：可运行产物、架构说明、演示脚本、评分映射、AI 使用记录、截图目录、视频目录、运行说明、提交清单。
+将现有 docs/ai-notes.md 扩展为完整 AI 过程记录：目标拆解、关键 prompt/回答摘要、人工决策点、返工记录、验收步骤、最终结论；同时增加“需要附上 AI 对话/截图证据”的清单。
+规定截图文件名与最少素材：控制台总览、CSV 预检/导入成功、TOTP 绑定、App A 登录成功、App B SSO 成功、异常登录锁定、审计日志筛选结果；视频由人工按演示脚本录制一次，打包脚本在出 zip 前校验视频文件是否存在。
+公开接口与数据变更
+AppClient 与其请求/响应 DTO、新种子数据、管理台表单中增加 4 个令牌策略字段：authorizationCodeTtlMinutes、accessTokenTtlMinutes、refreshTokenTtlMinutes、reuseRefreshTokens。
+AuditLog 与 AuditLogResponse 增加 4 个字段：targetType、targetId、targetName、userAgent。
+新增 3 个用户导入接口：模板下载、预检、正式导入；预检/导入响应统一返回 summary + rows 结构。
+新增 SAS 持久化表初始化与可复用 JWK 配置，但不改变现有客户端 client_id、issuer、端口和登录入口。
+测试与验收
+单元/服务测试
+CSV 预检：合法导入、重复用户名、缺失部门、未知角色、非法状态、缺失新用户密码、UTF-8 中文部门路径。
+客户端令牌映射：TTL/reuseRefreshTokens 正确写入 TokenSettings，管理端更新后即时生效。
+审计目标解析：控制台登录、App A/App B 授权登录、失败 5 次锁定都能写出正确 target* 字段。
+JWK 复用：二次启动读取同一密钥文件，公钥 kid 不漂移。
+集成/验收场景
+./gradlew.bat test、scripts/package.cmd、scripts/start-services.cmd、scripts/package-submission.cmd -AuthorName <姓名> 全通过。
+从 App A 走账号密码 + 首次 TOTP 绑定进入业务页，再访问 App B 无需再次登录；退出后再访问任一客户端需要重新认证。
+在 IAM 控制台执行一次 CSV 导入预检和一次正式导入，审计页能看到导入记录。
+连续 5 次错误密码后账号锁定，审计页可按异常事件与目标系统筛出该记录。
+提交 zip 内文件完整，按清单即可独立答辩。
+默认假设
+批量导入只做 CSV，不做 Excel；编码固定 UTF-8，分隔符固定英文逗号。
+导入采用 username 作为唯一业务键做 upsert，不新增“仅新增/仅更新”双模式。
+审计里的“登录什么”以目标系统为准，不再额外追踪更细粒度页面级路径。
+视频录制保留人工完成，但截图清单、文件命名和 zip 校验脚本纳入项目交付标准。
+实施计划
+16:54
+
+
+已处理 33m 6s
+已按这份 100 分补漏计划把主干功能补齐了，核心改动落在 UserImportService.java、UserController.java、admin.html、AppClient.java、JpaRegisteredClientRepositoryAdapter.java、SecurityConfig.java、FileBackedRsaKeyLoader.java、AuthorizationServerSchemaInitializer.java、AuditTargetResolver.java、AuditLogService.java 和 package-submission.ps1。现在已经有 CSV 模板下载、预检、事务性整批导入、导入审计、客户端 TTL/Refresh 策略显式配置、SAS JDBC 持久化、可复用 JWK、审计“登录什么系统”补全，以及评分映射/答辩脚本/提交清单/AI 记录等交付文档。
+
+自动化验证也补到了位，新增/更新的关键测试在 UserImportServiceTest.java、JpaRegisteredClientRepositoryAdapterTest.java、AuditTargetResolverTest.java、AuditLogServiceTest.java、FileBackedRsaKeyLoaderTest.java。我还用浏览器登录态实测了 CSV /preview -> /commit -> 审计入库，并把验收时导入的临时用户清掉了，没有把脏数据留在你的环境里。
+
+已实际跑通：
+
+./gradlew.bat test
+scripts/package.cmd
+scripts/start-services.cmd
+scripts/package-submission.cmd -AuthorName ZYT
+当前服务已重新启动，8080/8081/8082 正常；JWK 复用文件在 iam-signing.jwk.json，提交包在 dist/submission。正式交卷前还差最后一件人工证据补齐：把真实演示视频替换到 demo-walkthrough.mp4，并按 screenshots/README.md 放入答辩截图；代码、脚本和提交结构已经准备好了。
+
+
+17:27
+46 个文件已更改
++2573
+-592
+撤销
+README.md
+docs/ai-notes.md
+docs/architecture.md
+docs/demo-script.md
+docs/scoring-map.md
+docs/submission-checklist.md
+iam-server/build.gradle
+iam-server/src/main/java/com/example/iam/config/AppSecurityProperties.java
+iam-server/src/main/java/com/example/iam/config/AuthorizationServerSchemaInitializer.java
+iam-server/src/main/java/com/example/iam/config/CredentialUpgradeInitializer.java
+iam-server/src/main/java/com/example/iam/config/FileBackedRsaKeyLoader.java
+iam-server/src/main/java/com/example/iam/config/SecurityConfig.java
+iam-server/src/main/java/com/example/iam/config/SeedDataInitializer.java
+iam-server/src/main/java/com/example/iam/domain/AppClient.java
+iam-server/src/main/java/com/example/iam/domain/AuditLog.java
+iam-server/src/main/java/com/example/iam/security/AuditLogAspect.java
+iam-server/src/main/java/com/example/iam/security/AuditTarget.java
+iam-server/src/main/java/com/example/iam/security/AuditTargetResolver.java
+iam-server/src/main/java/com/example/iam/security/AuthenticationEventListener.java
+iam-server/src/main/java/com/example/iam/service/AppClientService.java
+iam-server/src/main/java/com/example/iam/service/AuditLogService.java
+iam-server/src/main/java/com/example/iam/service/JpaRegisteredClientRepositoryAdapter.java
+iam-server/src/main/java/com/example/iam/service/UserImportService.java
+iam-server/src/main/java/com/example/iam/web/ApiMapper.java
+iam-server/src/main/java/com/example/iam/web/UserController.java
+iam-server/src/main/java/com/example/iam/web/dto/AppClientRequest.java
+iam-server/src/main/java/com/example/iam/web/dto/AppClientResponse.java
+iam-server/src/main/java/com/example/iam/web/dto/AuditLogResponse.java
+iam-server/src/main/java/com/example/iam/web/dto/UserImportResponse.java
+iam-server/src/main/java/com/example/iam/web/dto/UserImportRowResponse.java
+iam-server/src/main/java/com/example/iam/web/dto/UserImportSummaryResponse.java
+iam-server/src/main/resources/application.yml
+iam-server/src/main/resources/sql/oauth2-authorization-consent-schema.sql
+iam-server/src/main/resources/sql/oauth2-authorization-schema.sql
+iam-server/src/main/resources/static/admin.html
+iam-server/src/test/java/com/example/iam/config/FileBackedRsaKeyLoaderTest.java
+iam-server/src/test/java/com/example/iam/security/AuditTargetResolverTest.java
+iam-server/src/test/java/com/example/iam/security/AuthenticationEventListenerTest.java
+iam-server/src/test/java/com/example/iam/service/AuditLogServiceTest.java
+iam-server/src/test/java/com/example/iam/service/JpaRegisteredClientRepositoryAdapterTest.java
+iam-server/src/test/java/com/example/iam/service/UserImportServiceTest.java
+scripts/package-submission.cmd
+scripts/package-submission.ps1
+submission-assets/screenshots/README.md
+submission-assets/video/README.md
+submission-assets/video/demo-walkthrough.mp4
+CSV 批量导入用户，给我两个模版文件，一个给我正常的数据可以直接用于导入演示的，一个是用于展示数据错误时的。
+17:58
+
+
+
+
+已处理 24s
+两个演示文件已经放好了，在 submission-assets/csv-templates。
+
+可直接用于成功导入演示的是 01-users-import-success.csv，里面是合法的部门路径、角色编码和新用户数据，当前环境可以直接拿去预检和导入。用于展示预检报错的是 02-users-import-errors.csv，故意包含了“缺少新用户密码、未知部门、未知角色、非法状态、同文件重复 username” 这几类典型错误。
+
+我还补了一个使用说明 README.md。现场演示时建议先传错误文件展示预检，再传成功文件展示确认导入和审计留痕。
+
+
+17:58
+3 个文件已更改
++27
+-0
+撤销
+submission-assets/csv-templates/01-users-import-success.csv
+submission-assets/csv-templates/02-users-import-errors.csv
+submission-assets/csv-templates/README.md
