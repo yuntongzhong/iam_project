@@ -58,6 +58,7 @@ public class LoginController {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>IAM 统一登录</title>
+                    <meta name="description" content="IAM 统一登录入口，用于完成账号密码认证、MFA 绑定或校验，并恢复原始授权目标页面。">
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -104,14 +105,14 @@ public class LoginController {
                         .shell {
                             position: relative;
                             z-index: 1;
-                            max-width: 1180px;
+                            max-width: 1220px;
                             margin: 0 auto;
-                            min-height: 100vh;
+                            min-height: 100dvh;
                             display: grid;
-                            grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
-                            gap: 18px;
-                            padding: 18px;
-                            align-items: stretch;
+                            grid-template-columns: minmax(0, 1.1fr) minmax(390px, 0.9fr);
+                            gap: 20px;
+                            padding: clamp(16px, 2.6vw, 28px);
+                            align-items: center;
                         }
 
                         .hero,
@@ -124,9 +125,9 @@ public class LoginController {
                         .hero {
                             position: relative;
                             display: grid;
-                            align-content: space-between;
-                            gap: 18px;
-                            padding: 28px;
+                            align-content: start;
+                            gap: 22px;
+                            padding: clamp(24px, 3vw, 34px);
                             background:
                                 linear-gradient(135deg, var(--primary-deep), var(--primary) 62%%, var(--accent) 100%%);
                             color: oklch(0.975 0.007 95);
@@ -141,6 +142,13 @@ public class LoginController {
                             height: 360px;
                             border-radius: 50%%;
                             background: radial-gradient(circle, rgba(255,255,255,.2), transparent 64%%);
+                        }
+
+                        .hero-copy {
+                            position: relative;
+                            z-index: 1;
+                            display: grid;
+                            gap: 18px;
                         }
 
                         .eyebrow {
@@ -195,10 +203,41 @@ public class LoginController {
                             color: rgba(239, 245, 255, 0.64);
                         }
 
+                        .helper-strip {
+                            display: grid;
+                            grid-template-columns: repeat(3, minmax(0, 1fr));
+                            gap: 10px;
+                            margin-top: 2px;
+                        }
+
+                        .helper-card {
+                            padding: 12px;
+                            border-radius: 18px;
+                            background: color-mix(in oklch, var(--surface-strong) 90%%, white);
+                            border: 1px solid rgba(71, 85, 105, 0.1);
+                        }
+
+                        .helper-card span {
+                            display: block;
+                            font-size: 12px;
+                            letter-spacing: .08em;
+                            text-transform: uppercase;
+                            color: var(--ink-soft);
+                        }
+
+                        .helper-card strong {
+                            display: block;
+                            margin-top: 8px;
+                            font: 700 0.96rem/1.35 "Lexend", sans-serif;
+                        }
+
                         .panel {
                             padding: 24px;
                             background: var(--surface);
                             border: 1px solid rgba(71, 85, 105, 0.12);
+                            display: grid;
+                            align-content: start;
+                            gap: 18px;
                         }
 
                         .panel h2 {
@@ -215,7 +254,6 @@ public class LoginController {
                         .stack {
                             display: grid;
                             gap: 14px;
-                            margin-top: 18px;
                         }
 
                         .field {
@@ -286,13 +324,21 @@ public class LoginController {
                         }
 
                         .footer-links a {
+                            display: inline-flex;
+                            align-items: center;
+                            min-height: 38px;
+                            padding: 0 12px;
+                            border-radius: 999px;
+                            border: 1px solid rgba(71, 85, 105, 0.12);
+                            background: color-mix(in oklch, var(--surface-strong) 92%%, white);
                             color: var(--ink-soft);
                             text-decoration: none;
                         }
 
                         @media (max-width: 1080px) {
                             .shell { grid-template-columns: 1fr; }
-                            .hero-grid { grid-template-columns: 1fr; }
+                            .hero-grid,
+                            .helper-strip { grid-template-columns: 1fr; }
                         }
 
                         @media (max-width: 720px) {
@@ -306,7 +352,7 @@ public class LoginController {
                 <body>
                 <main class="shell">
                     <section class="hero">
-                        <div>
+                        <div class="hero-copy">
                             <div class="eyebrow">Identity Gateway</div>
                             <h1>统一身份认证入口</h1>
                             <p>这个入口同时服务 IAM 管理台与两个接入方应用。用户名密码验证通过后，系统会继续执行 TOTP 绑定或动态码校验，以完成完整的认证链路。</p>
@@ -330,6 +376,20 @@ public class LoginController {
                         <div>
                             <h2>登录并继续授权流程</h2>
                             <p>登录后会根据账号状态自动进入 MFA 绑定页或动态码输入页，用于完成统一身份中心的二次认证并恢复原始授权流程。</p>
+                        </div>
+                        <div class="helper-strip" aria-label="登录步骤摘要">
+                            <article class="helper-card">
+                                <span>Step 01</span>
+                                <strong>账号密码校验</strong>
+                            </article>
+                            <article class="helper-card">
+                                <span>Step 02</span>
+                                <strong>MFA 绑定或动态码验证</strong>
+                            </article>
+                            <article class="helper-card">
+                                <span>Step 03</span>
+                                <strong>恢复原始目标页面</strong>
+                            </article>
                         </div>
                         <div class="stack">
                             %s

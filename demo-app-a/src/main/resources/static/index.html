@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo App A</title>
+    <meta name="description" content="Demo App A 用于展示 IAM 首次授权、PKCE 接入结果、角色权限解释和完整 OIDC Claims。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,6 +19,7 @@
             --teal: oklch(0.48 0.11 240);
             --teal-deep: oklch(0.3 0.07 246);
             --clay: oklch(0.74 0.1 84);
+            --glass: rgba(255, 255, 255, 0.1);
             --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
         }
 
@@ -45,6 +47,15 @@
             mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.24), transparent 72%);
         }
 
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto 0 0;
+            height: 42vh;
+            pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.5));
+        }
+
         .page {
             max-width: 1380px;
             margin: 0 auto;
@@ -61,10 +72,12 @@
         .hero {
             display: grid;
             gap: 20px;
-            grid-template-columns: minmax(0, 1.3fr) minmax(320px, .82fr);
+            grid-template-columns: minmax(0, 1.16fr) minmax(340px, .84fr);
             padding: clamp(20px, 2.7vw, 32px);
             border-radius: 30px;
-            background: linear-gradient(135deg, oklch(0.26 0.05 250), oklch(0.34 0.07 238) 58%, oklch(0.4 0.08 220) 100%);
+            background:
+                linear-gradient(135deg, oklch(0.26 0.05 250), oklch(0.34 0.07 238) 56%, oklch(0.4 0.08 220) 100%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
             color: oklch(0.976 0.006 95);
             box-shadow: var(--shadow);
         }
@@ -78,6 +91,14 @@
             height: 340px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 64%);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            align-content: start;
+            gap: 18px;
         }
 
         .eyebrow {
@@ -101,10 +122,47 @@
         }
 
         .hero p {
-            margin: 12px 0 0;
-            max-width: 62ch;
+            margin: 0;
+            max-width: 56ch;
             color: rgba(248, 244, 238, 0.84);
             line-height: 1.7;
+        }
+
+        .hero-proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 2px;
+        }
+
+        .hero-proof-card {
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-proof-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(241, 246, 255, 0.66);
+        }
+
+        .hero-proof-card strong {
+            display: block;
+            margin-top: 8px;
+            font: 700 1rem/1.3 "Lexend", sans-serif;
+        }
+
+        .hero-proof-card p {
+            margin-top: 8px;
+            color: rgba(244, 247, 255, 0.78);
+            font-size: 14px;
+            line-height: 1.6;
         }
 
         .button-row,
@@ -122,6 +180,29 @@
             margin-top: 16px;
         }
 
+        .section-nav {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0 0;
+        }
+
+        .anchor-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(134, 100, 61, 0.12);
+            color: var(--ink);
+            text-decoration: none;
+            font: 700 13px/1 "Lexend", sans-serif;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -130,8 +211,11 @@
             padding: 0 18px;
             border-radius: 999px;
             border: 1px solid transparent;
+            background: none;
             text-decoration: none;
+            font: inherit;
             font-weight: 700;
+            cursor: pointer;
             transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
         }
 
@@ -149,6 +233,7 @@
             display: grid;
             gap: 14px;
             align-content: start;
+            backdrop-filter: blur(12px);
         }
 
         .hero-side h2 {
@@ -249,6 +334,21 @@
             border: 1px solid rgba(134, 100, 61, 0.14);
             box-shadow: 0 16px 50px rgba(75, 50, 18, 0.08);
             backdrop-filter: blur(14px);
+            scroll-margin-top: 24px;
+        }
+
+        .panel-kicker {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 10px;
+            margin-bottom: 10px;
+            border-radius: 999px;
+            background: color-mix(in oklch, var(--teal) 10%, white);
+            color: var(--teal-deep);
+            font: 700 12px/1 "Lexend", sans-serif;
+            letter-spacing: .08em;
+            text-transform: uppercase;
         }
 
         .panel-head {
@@ -283,8 +383,19 @@
         .token-card {
             border-radius: 22px;
             padding: 16px;
-            background: color-mix(in oklch, var(--surface-strong) 88%, white);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 250, 255, 0.96)),
+                color-mix(in oklch, var(--surface-strong) 88%, white);
             border: 1px solid rgba(134, 100, 61, 0.12);
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .glossary-item:hover,
+        .token-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(72, 124, 255, 0.18);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
         }
 
         .summary-card .label {
@@ -435,6 +546,8 @@
             background: oklch(0.24 0.02 55);
             color: oklch(0.94 0.01 95);
             font: 13px/1.7 "Source Sans 3", monospace;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
 
         .error {
@@ -456,7 +569,8 @@
 
         @media (max-width: 1080px) {
             .hero,
-            .explain-grid {
+            .explain-grid,
+            .hero-proof-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -467,6 +581,7 @@
             .panel { padding: 18px; border-radius: 22px; }
             .panel-head { flex-direction: column; align-items: stretch; }
             .btn { width: 100%; }
+            .anchor-chip { width: 100%; justify-content: center; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -478,12 +593,12 @@
                 scroll-behavior: auto !important;
             }
         }
-    </style>
+</style>
 </head>
 <body>
-<div class="page">
+<main class="page">
     <section class="hero">
-        <div>
+        <div class="hero-copy">
             <div class="eyebrow">SSO Evidence Surface</div>
             <h1>Demo App A 展示首次授权与权限上下文</h1>
             <p>这个页面重点用于演示第一跳客户端如何通过 Authorization Code + PKCE 接入 IAM，并把登录后拿到的角色、权限、Spring Authorities 和完整 Claims 直接摊开给答辩老师看。</p>
@@ -491,6 +606,23 @@
                 <a class="btn btn-light" href="http://127.0.0.1:8082/">跳转 Demo App B</a>
                 <a class="btn btn-ghost" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
                 <a class="btn btn-ghost" href="/logout">单点退出</a>
+            </div>
+            <div class="hero-proof-grid">
+                <article class="hero-proof-card">
+                    <span>首跳授权</span>
+                    <strong>PKCE 接入证据</strong>
+                    <p>证明首个业务客户端已经走通标准 OAuth2 授权码流程，并拿到可用身份结果。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>运行时判权</span>
+                    <strong>角色、权限与 Authority 对齐</strong>
+                    <p>把后台治理模型和 Spring Security 运行时授权串直接放到同一个画面里解释。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>答辩视角</span>
+                    <strong>Claims 全量摊开</strong>
+                    <p>让“拿到身份上下文”和“系统如何消费身份”两件事在首屏后自然衔接。</p>
+                </article>
             </div>
         </div>
         <aside class="hero-side">
@@ -540,12 +672,19 @@
         </aside>
     </section>
 
+    <nav class="section-nav" aria-label="页面导航">
+        <a class="anchor-chip" href="#glossary">概念词典</a>
+        <a class="anchor-chip" href="#explainer">身份解释器</a>
+        <a class="anchor-chip" href="#claims">完整 Claims</a>
+    </nav>
+
     <div id="error" class="error"></div>
 
     <section class="layout">
-        <article class="panel">
+        <article class="panel" id="glossary">
             <div class="panel-head">
                 <div>
+                    <div class="panel-kicker">Concept Map</div>
                     <h2>概念词典</h2>
                     <p>把容易被混用的几个词拆开，便于现场说明“为什么 Claims 里有角色和权限，而代码里判断的是 Authority”。</p>
                 </div>
@@ -558,13 +697,14 @@
             </div>
         </article>
 
-        <article class="panel">
+        <article class="panel" id="explainer">
             <div class="panel-head">
                 <div>
+                    <div class="panel-kicker">Runtime View</div>
                     <h2>身份解释器</h2>
                     <p>下方每一项都带中文说明，避免页面只剩英文编码，看不出背后的业务含义。</p>
                 </div>
-                <a class="btn btn-light" href="javascript:void(0)" onclick="loadSession()">刷新数据</a>
+                <button class="btn btn-light" type="button" onclick="loadSession()">刷新数据</button>
             </div>
             <div class="explain-grid">
                 <section class="token-column">
@@ -582,9 +722,10 @@
             </div>
         </article>
 
-        <article class="panel">
+        <article class="panel" id="claims">
             <div class="panel-head">
                 <div>
+                    <div class="panel-kicker">Token Payload</div>
                     <h2>完整 Claims</h2>
                     <p>这里展示 OIDC User 里返回的全部 Claims，便于直接证明客户端已经拿到了角色、权限和基本身份属性。</p>
                 </div>
@@ -592,7 +733,7 @@
             <pre id="claimsBox">加载中...</pre>
         </article>
     </section>
-</div>
+</main>
 
 <script>
 function setText(id, value) {

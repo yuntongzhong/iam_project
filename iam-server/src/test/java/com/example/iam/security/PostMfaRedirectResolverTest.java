@@ -44,6 +44,13 @@ class PostMfaRedirectResolverTest {
         assertEquals("/admin.html", resolver.resolve(request, requestCache(savedRequest("http://127.0.0.1:8080/mfa/setup"))));
     }
 
+    @Test
+    void shouldIgnoreStaticAssetTargets() {
+        MockHttpServletRequest request = loginRequest();
+
+        assertEquals("/admin.html", resolver.resolve(request, requestCache(savedRequest("http://127.0.0.1:8080/robots.txt?continue"))));
+    }
+
     private MockHttpServletRequest loginRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/login");
         request.setScheme("http");

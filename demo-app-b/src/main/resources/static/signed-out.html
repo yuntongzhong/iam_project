@@ -4,73 +4,199 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo App B 已退出</title>
+    <meta name="description" content="Demo App B 单点退出完成页，展示第二个接入方会话清理、全局退出回收与后续访问路径。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: oklch(0.978 0.012 92);
-            --surface: oklch(0.992 0.004 95 / 0.92);
-            --ink: oklch(0.225 0.02 52);
-            --ink-soft: oklch(0.44 0.02 58);
-            --amber: oklch(0.68 0.12 52);
-            --shadow: 0 24px 80px rgba(59, 38, 16, 0.12);
+            --bg: oklch(0.986 0.004 240);
+            --surface: oklch(0.998 0.002 240 / 0.94);
+            --surface-strong: oklch(0.972 0.008 232);
+            --ink: oklch(0.2 0.03 255);
+            --ink-soft: oklch(0.45 0.02 245);
+            --sky: oklch(0.56 0.12 235);
+            --sky-deep: oklch(0.31 0.08 245);
+            --olive: oklch(0.62 0.074 132);
+            --shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
         }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             min-height: 100vh;
-            display: grid;
-            place-items: center;
-            padding: 14px;
+            padding: 18px;
             font-family: "Source Sans 3", "Microsoft YaHei", sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at 10% 10%, oklch(0.93 0.06 60 / 0.55), transparent 24%),
-                radial-gradient(circle at 90% 15%, oklch(0.9 0.06 140 / 0.35), transparent 20%),
-                linear-gradient(180deg, oklch(0.99 0.01 95), var(--bg));
+                radial-gradient(circle at 10% 8%, oklch(0.9 0.05 235 / 0.72), transparent 24%),
+                radial-gradient(circle at 90% 14%, oklch(0.92 0.06 180 / 0.24), transparent 18%),
+                linear-gradient(180deg, oklch(0.992 0.003 230), var(--bg));
         }
-        .card {
-            width: min(680px, 100%);
-            padding: 24px;
-            border-radius: 28px;
-            background: var(--surface);
-            border: 1px solid rgba(134, 100, 61, 0.12);
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.05) calc(100% - 1px)),
+                linear-gradient(180deg, transparent 0, transparent calc(100% - 1px), rgba(51, 65, 85, 0.045) calc(100% - 1px));
+            background-size: 88px 88px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.18), transparent 72%);
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1020px, 100%);
+            min-height: calc(100vh - 36px);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.96fr);
+            gap: 18px;
+            align-items: center;
+        }
+
+        .hero,
+        .panel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px;
             box-shadow: var(--shadow);
         }
+
+        .hero {
+            padding: 28px;
+            display: grid;
+            gap: 18px;
+            align-content: start;
+            min-height: 420px;
+            color: oklch(0.976 0.006 95);
+            background: linear-gradient(135deg, var(--sky-deep), var(--sky) 62%, var(--olive) 100%);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -10%;
+            bottom: -24%;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 66%);
+            pointer-events: none;
+        }
+
         .eyebrow {
             display: inline-flex;
+            align-items: center;
+            width: fit-content;
             padding: 8px 14px;
             border-radius: 999px;
-            background: color-mix(in oklch, var(--amber) 16%, white);
-            color: oklch(0.44 0.08 48);
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(248, 251, 255, 0.94);
             font: 700 12px/1 "Lexend", sans-serif;
             letter-spacing: .12em;
             text-transform: uppercase;
         }
+
         h1 {
-            margin: 16px 0 8px;
-            font: 700 clamp(1.86rem, 4vw, 2.9rem)/1.05 "Lexend", sans-serif;
+            margin: 0;
+            max-width: 10ch;
+            font: 700 clamp(2rem, 4vw, 3.2rem)/1.04 "Lexend", sans-serif;
         }
+
         p {
             margin: 0;
-            color: var(--ink-soft);
-            line-height: 1.68;
-            max-width: 58ch;
+            max-width: 52ch;
+            color: rgba(241, 246, 255, 0.82);
+            line-height: 1.72;
         }
-        .summary {
-            margin-top: 16px;
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .status-card {
             padding: 16px;
-            border-radius: 24px;
-            background: color-mix(in oklch, var(--amber) 10%, white);
-            color: var(--ink-soft);
+            border-radius: 22px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.16);
         }
+
+        .status-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.68);
+        }
+
+        .status-card strong {
+            display: block;
+            margin-top: 8px;
+            font: 700 1rem/1.35 "Lexend", sans-serif;
+        }
+
+        .hero-note {
+            max-width: 58ch;
+            padding: 14px 16px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.08);
+            border: 1px solid rgba(248, 251, 255, 0.14);
+            line-height: 1.7;
+            color: rgba(241, 246, 255, 0.82);
+        }
+
+        .hero-note strong {
+            color: oklch(0.99 0.003 95);
+        }
+
+        .panel {
+            padding: 24px;
+            display: grid;
+            gap: 16px;
+            align-content: start;
+            background: var(--surface);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+        }
+
+        .panel h2 {
+            margin: 0;
+            font: 700 1.76rem/1.08 "Lexend", sans-serif;
+        }
+
+        .panel-copy {
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .tip {
+            padding: 16px;
+            border-radius: 22px;
+            background: color-mix(in oklch, var(--surface-strong) 92%, white);
+            border: 1px solid rgba(71, 85, 105, 0.08);
+            color: var(--ink-soft);
+            line-height: 1.7;
+        }
+
+        .tip strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--ink);
+            font-family: "Lexend", sans-serif;
+        }
+
         .actions {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            margin-top: 20px;
         }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -78,34 +204,95 @@
             min-height: 44px;
             padding: 0 18px;
             border-radius: 999px;
-            border: 1px solid rgba(134, 100, 61, 0.14);
-            background: rgba(255,255,255,.75);
+            border: 1px solid rgba(71, 85, 105, 0.12);
+            background: rgba(255, 255, 255, 0.78);
             color: var(--ink);
             text-decoration: none;
             font-weight: 700;
+            transition: transform .18s ease, border-color .18s ease, background-color .18s ease;
         }
+
+        .btn:hover { transform: translateY(-1px); }
+
         .btn.primary {
             background: var(--ink);
             border-color: var(--ink);
             color: oklch(0.98 0.004 95);
         }
-        @media (max-width: 680px) {
-            .card { padding: 18px; border-radius: 22px; }
-            .btn { width: 100%; }
+
+        @media (max-width: 960px) {
+            .shell,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .shell {
+                min-height: auto;
+            }
+
+            .hero {
+                min-height: 0;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .hero,
+            .panel {
+                padding: 20px;
+                border-radius: 24px;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-<main class="card">
-    <div class="eyebrow">Demo App B</div>
-    <h1>第二接入方会话也已退出</h1>
-    <p>Demo App B 的本地会话已经结束，同时浏览器中的 IAM 全局登录态也已回收。再次访问时，会重新走统一认证与授权流程。</p>
-    <div class="summary">这个结束页主要用于说明第二个接入方也参与了单点退出链路，从而补全 SSO / SLO 的答辩叙事。</div>
-    <div class="actions">
-        <a class="btn primary" href="/">重新进入 Demo App B</a>
-        <a class="btn" href="http://127.0.0.1:8081/">前往 Demo App A</a>
-        <a class="btn" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
-    </div>
+<main class="shell">
+    <section class="hero">
+        <div class="eyebrow">Demo App B</div>
+        <h1>第二接入方会话也已退出</h1>
+        <p>Demo App B 的本地会话已经结束，同时浏览器中的 IAM 全局登录态也已经回收。之后再次访问时，会重新进入统一身份认证与授权流程。</p>
+        <section class="status-grid" aria-label="退出状态摘要">
+            <article class="status-card">
+                <span>第二客户端</span>
+                <strong>本地会话已清理</strong>
+            </article>
+            <article class="status-card">
+                <span>统一身份</span>
+                <strong>全局登录态同步回收</strong>
+            </article>
+            <article class="status-card">
+                <span>展示价值</span>
+                <strong>SLO 证据链已经闭环</strong>
+            </article>
+        </section>
+        <div class="hero-note"><strong>答辩讲解点：</strong>这一页用来说明第二个接入方也参与了单点退出链路，因此整套 SSO / SLO 演示不只是“能登录”，而是“能统一回收会话”。</div>
+    </section>
+    <section class="panel">
+        <div>
+            <h2>回到哪个环节</h2>
+            <p class="panel-copy">如果你重新进入任一受保护客户端，浏览器都会重新回到 IAM 做统一认证。这正好能把“统一登录”和“统一退出”的关系讲完整。</p>
+        </div>
+        <div class="tip">
+            <strong>重新进入 Demo App B</strong>
+            继续从第二个接入方演示同浏览器里的 SSO/SLO 行为，适合强调会话复用与会话回收。
+        </div>
+        <div class="tip">
+            <strong>切回 Demo App A</strong>
+            和首个接入方做对照，可以更直观地说明两个系统都消费同一套身份中心结果。
+        </div>
+        <div class="tip">
+            <strong>回到 IAM 管理台</strong>
+            可以进一步讲解客户端配置、用户角色和权限模型如何共同支撑这条登录链路。
+        </div>
+        <div class="actions">
+            <a class="btn primary" href="/">重新进入 Demo App B</a>
+            <a class="btn" href="http://127.0.0.1:8081/">前往 Demo App A</a>
+            <a class="btn" href="http://127.0.0.1:8080/admin.html">打开 IAM 管理台</a>
+        </div>
+    </section>
 </main>
 </body>
 </html>

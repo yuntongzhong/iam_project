@@ -31,7 +31,7 @@ public class PostMfaRedirectResolver {
         }
 
         String path = extractPath(redirectUrl);
-        if (DISALLOWED_PREFIXES.stream().anyMatch(path::startsWith)) {
+        if (DISALLOWED_PREFIXES.stream().anyMatch(path::startsWith) || looksLikeStaticAsset(path)) {
             return DEFAULT_TARGET_URL;
         }
 
@@ -49,5 +49,11 @@ public class PostMfaRedirectResolver {
             return "/";
         }
         return redirectUrl.substring(pathStart);
+    }
+
+    private boolean looksLikeStaticAsset(String path) {
+        int queryStart = path.indexOf('?');
+        String cleanPath = queryStart >= 0 ? path.substring(0, queryStart) : path;
+        return cleanPath.matches(".+\\.(txt|ico|png|jpg|jpeg|gif|svg|webp|css|js|map|woff2?)$");
     }
 }

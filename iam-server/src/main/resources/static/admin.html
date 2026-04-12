@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IAM 治理控制台</title>
+    <meta name="description" content="IAM 治理控制台，用于演示用户、角色、权限、部门、应用接入和审计轨迹的完整治理关系。">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -196,6 +197,47 @@
             color: rgba(242, 246, 255, 0.82);
             font-size: 0.97rem;
             line-height: 1.72;
+        }
+
+        .hero-proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            max-width: 920px;
+        }
+
+        .hero-proof-card {
+            position: relative;
+            z-index: 1;
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(248, 251, 255, 0.1);
+            border: 1px solid rgba(248, 251, 255, 0.14);
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .hero-proof-card span {
+            display: block;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(239, 245, 255, 0.64);
+        }
+
+        .hero-proof-card strong {
+            display: block;
+            margin-top: 8px;
+            font-family: "Lexend", sans-serif;
+            font-size: 1rem;
+            line-height: 1.32;
+        }
+
+        .hero-proof-card p {
+            margin: 8px 0 0;
+            color: rgba(242, 246, 255, 0.78);
+            font-size: 14px;
+            line-height: 1.62;
         }
 
         .hero-actions,
@@ -437,6 +479,7 @@
                 color-mix(in oklch, var(--surface-strong) 94%, white);
             border: 1px solid rgba(71, 85, 105, 0.1);
             min-height: 124px;
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
         }
 
         .metric-label {
@@ -479,6 +522,7 @@
             border-radius: 22px;
             background: color-mix(in oklch, var(--surface-strong) 90%, white);
             border: 1px solid rgba(71, 85, 105, 0.1);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
         }
 
         .glossary-item strong {
@@ -677,6 +721,12 @@
             color: var(--teal-deep);
             font-size: 12px;
             font-weight: 700;
+            text-decoration: none;
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+        }
+
+        .chip:hover {
+            transform: translateY(-1px);
         }
 
         .chip.alt {
@@ -787,8 +837,18 @@
             border-radius: 20px;
             background: color-mix(in oklch, var(--surface-strong) 86%, white);
             border: 1px solid rgba(71, 85, 105, 0.1);
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
         }
 
+        .metric-card:hover,
+        .glossary-item:hover,
+        .legend-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+            border-color: rgba(71, 85, 105, 0.16);
+        }
+
+        .legend-card h3,
         .legend-card h4 {
             margin: 0 0 8px;
             font-size: 0.96rem;
@@ -891,6 +951,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .hero-proof-grid {
+                grid-template-columns: 1fr;
+            }
+
             .waterfall-grid {
                 columns: 1;
             }
@@ -932,6 +996,11 @@
             .btn {
                 width: 100%;
             }
+
+            .chip[href^="#"] {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -943,10 +1012,10 @@
                 scroll-behavior: auto !important;
             }
         }
-    </style>
+</style>
 </head>
 <body>
-<div id="app" class="app-shell">
+<main id="app" class="app-shell">
     <div v-if="flash.show" class="flash-banner" :class="flash.tone" role="status" aria-live="polite">
         <div class="flash-copy">
             <div class="flash-title">{{ flash.tone === 'error' ? '操作失败' : '操作成功' }}</div>
@@ -966,6 +1035,23 @@
                 <a class="btn btn-ghost" href="http://127.0.0.1:8081/">打开 Demo App A</a>
                 <a class="btn btn-ghost" href="http://127.0.0.1:8082/">打开 Demo App B</a>
                 <a class="btn btn-ghost" href="/logout">退出登录</a>
+            </div>
+            <div class="hero-proof-grid">
+                <article class="hero-proof-card">
+                    <span>治理主线</span>
+                    <strong>用户、角色、权限与客户端在同一叙事里闭环</strong>
+                    <p>首屏就把 IAM 的组织关系、授权模型和下游应用接入放到一张大图里说明清楚。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>演示效率</span>
+                    <strong>后台操作、审计轨迹和身份上下文同步可见</strong>
+                    <p>适合投屏讲解，既能动手演示，也能把系统能力边界直接讲明白。</p>
+                </article>
+                <article class="hero-proof-card">
+                    <span>运行时视角</span>
+                    <strong>治理模型与 Spring Security 判权结果对齐</strong>
+                    <p>角色如何映射、权限如何继承、Authority 如何参与判断，都能在页面里一眼看出。</p>
+                </article>
             </div>
         </div>
         <aside class="hero-side">
@@ -993,12 +1079,12 @@
                     </div>
                 </div>
                 <div class="menu-strip">
-                    <span class="chip" v-if="canViewUsers">用户目录</span>
-                    <span class="chip" v-if="canViewDepartments">部门拓扑</span>
-                    <span class="chip" v-if="canViewRoles">角色编排</span>
-                    <span class="chip" v-if="canViewPermissions">权限词典</span>
-                    <span class="chip" v-if="canViewApps">应用客户端</span>
-                    <span class="chip" v-if="canViewLogs">审计轨迹</span>
+                    <a class="chip" v-if="canViewUsers" href="#users-panel">用户目录</a>
+                    <a class="chip" v-if="canViewDepartments" href="#departments-panel">部门拓扑</a>
+                    <a class="chip" v-if="canViewRoles" href="#roles-panel">角色编排</a>
+                    <a class="chip" v-if="canViewPermissions" href="#permissions-panel">权限词典</a>
+                    <a class="chip" v-if="canViewApps" href="#apps-panel">应用客户端</a>
+                    <a class="chip" v-if="canViewLogs" href="#logs-panel">审计轨迹</a>
                 </div>
             </div>
             <div>
@@ -1025,7 +1111,7 @@
     </section>
 
     <section class="overview">
-        <article class="panel" v-if="canViewUsers">
+        <article class="panel" id="overview-panel" v-if="canViewUsers">
             <div class="panel-header">
                 <div>
                     <h2 class="panel-title">治理总览</h2>
@@ -1041,7 +1127,7 @@
             </div>
         </article>
 
-        <article class="panel">
+        <article class="panel" id="glossary-panel">
             <div class="panel-header">
                 <div>
                     <h2 class="panel-title">概念词典</h2>
@@ -1058,7 +1144,7 @@
     </section>
 
     <section class="workspace">
-        <article class="panel">
+        <article class="panel" id="users-panel">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">用户目录与生效权限</h2>
@@ -1167,7 +1253,7 @@
 
         <div class="workspace-grid">
         <div class="stack">
-            <article class="panel" v-if="canViewLogs">
+            <article class="panel" id="logs-panel" v-if="canViewLogs">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">审计轨迹</h2>
@@ -1218,7 +1304,7 @@
         </div>
 
         <div class="stack">
-            <article class="panel" v-if="canViewDepartments">
+            <article class="panel" id="departments-panel" v-if="canViewDepartments">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">部门拓扑</h2>
@@ -1268,7 +1354,7 @@
                 </div>
             </article>
 
-            <article class="panel" v-if="canViewRoles">
+            <article class="panel" id="roles-panel" v-if="canViewRoles">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">角色编排</h2>
@@ -1337,7 +1423,7 @@
                 </div>
             </article>
 
-            <article class="panel" v-if="canViewPermissions">
+            <article class="panel" id="permissions-panel" v-if="canViewPermissions">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">权限词典</h2>
@@ -1346,7 +1432,7 @@
                 </div>
                 <div class="section-grid scroll-region compact waterfall-grid">
                     <article class="legend-card" v-for="permission in permissions" :key="permission.id">
-                        <h4>{{ permission.code }}</h4>
+                        <h3>{{ permission.code }}</h3>
                         <p>{{ permission.name }}{{ permission.description && permission.description !== permission.name ? '：' + permission.description : '' }}</p>
                         <div class="chip-list" style="margin-top:12px;">
                             <span class="mini-tag">{{ permissionTypeText(permission.permissionType) }}</span>
@@ -1357,7 +1443,7 @@
                 </div>
             </article>
 
-            <article class="panel" v-if="canViewApps">
+            <article class="panel" id="apps-panel" v-if="canViewApps">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">应用客户端注册</h2>
@@ -1447,7 +1533,7 @@
                 </div>
             </article>
 
-            <article class="panel">
+            <article class="panel" id="authority-panel">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Authority 映射说明</h2>
@@ -1456,15 +1542,15 @@
                 </div>
                 <div class="section-grid">
                     <div class="legend-card">
-                        <h4>`ROLE_ADMIN`</h4>
+                        <h3>`ROLE_ADMIN`</h3>
                         <p>表示角色 Authority。由角色编码 `ADMIN` 映射而来，供 `hasRole('ADMIN')` 这类表达式使用。</p>
                     </div>
                     <div class="legend-card">
-                        <h4>`PERM_USER_WRITE`</h4>
+                        <h3>`PERM_USER_WRITE`</h3>
                         <p>表示权限 Authority。由权限编码 `USER_WRITE` 映射而来，供 `hasAuthority('PERM_USER_WRITE')` 使用。</p>
                     </div>
                     <div class="legend-card">
-                        <h4>角色与权限的关系</h4>
+                        <h3>角色与权限的关系</h3>
                         <p>角色是业务身份包，权限是最小动作单元。Spring 在运行时把两者都铺平成 Authority，再参与访问控制判断。</p>
                     </div>
                 </div>
@@ -1472,7 +1558,7 @@
         </div>
         </div>
     </section>
-</div>
+</main>
 
 <script>
 const { createApp } = Vue;

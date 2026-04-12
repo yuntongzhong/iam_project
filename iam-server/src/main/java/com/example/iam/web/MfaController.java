@@ -143,6 +143,7 @@ public class MfaController {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>%s</title>
+                    <meta name="description" content="IAM 多因素认证页面，用于首次绑定 TOTP 或输入动态验证码后继续原始授权流程。">
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -189,13 +190,13 @@ public class MfaController {
                         .shell {
                             position: relative;
                             z-index: 1;
-                            max-width: 1040px;
+                            max-width: 1120px;
                             margin: 0 auto;
-                            min-height: 100vh;
+                            min-height: 100dvh;
                             display: grid;
-                            grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
-                            gap: 14px;
-                            padding: 14px;
+                            grid-template-columns: minmax(0, 1.06fr) minmax(380px, 0.94fr);
+                            gap: 18px;
+                            padding: clamp(14px, 2.4vw, 24px);
                             align-items: center;
                         }
 
@@ -322,6 +323,9 @@ public class MfaController {
                             padding: 20px;
                             background: var(--surface);
                             border: 1px solid rgba(71, 85, 105, 0.12);
+                            display: grid;
+                            align-content: start;
+                            gap: 16px;
                         }
 
                         .panel h2 {
@@ -339,7 +343,33 @@ public class MfaController {
                         .stack {
                             display: grid;
                             gap: 10px;
-                            margin-top: 14px;
+                        }
+
+                        .helper-strip {
+                            display: grid;
+                            grid-template-columns: repeat(3, minmax(0, 1fr));
+                            gap: 10px;
+                        }
+
+                        .helper-card {
+                            padding: 12px;
+                            border-radius: 18px;
+                            background: color-mix(in oklch, var(--surface-strong) 90%%, white);
+                            border: 1px solid rgba(71, 85, 105, 0.1);
+                        }
+
+                        .helper-card span {
+                            display: block;
+                            font-size: 12px;
+                            letter-spacing: .08em;
+                            text-transform: uppercase;
+                            color: var(--ink-soft);
+                        }
+
+                        .helper-card strong {
+                            display: block;
+                            margin-top: 8px;
+                            font: 700 0.96rem/1.35 "Lexend", sans-serif;
                         }
 
                         .field {
@@ -409,7 +439,8 @@ public class MfaController {
                         @media (max-width: 1080px) {
                             .shell { grid-template-columns: 1fr; }
                             .info-strip,
-                            .step-grid { grid-template-columns: 1fr; }
+                            .step-grid,
+                            .helper-strip { grid-template-columns: 1fr; }
                         }
 
                         @media (max-width: 720px) {
@@ -432,6 +463,20 @@ public class MfaController {
                         <div>
                             <h2>完成当前认证步骤</h2>
                             <p>输入当前认证器生成的 6 位动态码。校验通过后，系统会恢复之前暂停的登录会话并自动跳转到原目标地址。</p>
+                        </div>
+                        <div class="helper-strip" aria-label="MFA 处理要点">
+                            <article class="helper-card">
+                                <span>输入要求</span>
+                                <strong>仅需当前 6 位动态码</strong>
+                            </article>
+                            <article class="helper-card">
+                                <span>通过结果</span>
+                                <strong>恢复之前的登录会话</strong>
+                            </article>
+                            <article class="helper-card">
+                                <span>跳转方式</span>
+                                <strong>自动返回原始目标页面</strong>
+                            </article>
                         </div>
                         <div class="stack">
                             <div id="feedback" class="notice" role="alert"></div>
