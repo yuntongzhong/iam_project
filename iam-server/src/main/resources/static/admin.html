@@ -555,12 +555,36 @@
             display: grid;
             gap: 20px;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            align-items: start;
+            align-items: stretch;
         }
 
-        .workspace-grid > .stack:last-child > .panel:nth-child(4),
-        .workspace-grid > .stack:last-child > .panel:nth-child(5) {
+        .governance-grid > .panel {
+            height: 100%;
+        }
+
+        .panel-departments {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .panel-roles {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .panel-permissions {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .panel-authority {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .panel-apps {
             grid-column: 1 / -1;
+            grid-row: 3;
         }
 
         .stack {
@@ -962,6 +986,15 @@
             .workspace-grid > .stack:last-child {
                 grid-template-columns: 1fr;
             }
+
+            .panel-departments,
+            .panel-roles,
+            .panel-permissions,
+            .panel-authority,
+            .panel-apps {
+                grid-column: auto;
+                grid-row: auto;
+            }
         }
 
         @media (max-width: 760px) {
@@ -1303,8 +1336,8 @@
             </article>
         </div>
 
-        <div class="stack">
-            <article class="panel" id="departments-panel" v-if="canViewDepartments">
+        <div class="stack governance-grid">
+            <article class="panel panel-departments" id="departments-panel" v-if="canViewDepartments">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">部门拓扑</h2>
@@ -1354,7 +1387,7 @@
                 </div>
             </article>
 
-            <article class="panel" id="roles-panel" v-if="canViewRoles">
+            <article class="panel panel-roles" id="roles-panel" v-if="canViewRoles">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">角色编排</h2>
@@ -1423,7 +1456,7 @@
                 </div>
             </article>
 
-            <article class="panel" id="permissions-panel" v-if="canViewPermissions">
+            <article class="panel panel-permissions" id="permissions-panel" v-if="canViewPermissions">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">权限词典</h2>
@@ -1443,7 +1476,7 @@
                 </div>
             </article>
 
-            <article class="panel" id="apps-panel" v-if="canViewApps">
+            <article class="panel panel-apps" id="apps-panel" v-if="canViewApps">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">应用客户端注册</h2>
@@ -1533,7 +1566,7 @@
                 </div>
             </article>
 
-            <article class="panel" id="authority-panel">
+            <article class="panel panel-authority" id="authority-panel">
                 <div class="panel-header">
                     <div>
                         <h2 class="panel-title">Authority 映射说明</h2>

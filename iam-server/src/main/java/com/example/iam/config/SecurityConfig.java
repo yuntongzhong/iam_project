@@ -95,7 +95,7 @@ public class SecurityConfig {
                                 "PERM_AUDIT_READ"
                         )
                         .requestMatchers("/api/session").authenticated()
-                        .requestMatchers("/mfa/**", "/error", "/slo/**").permitAll()
+                        .requestMatchers("/mfa/**", "/error", "/slo/**", "/logged-out").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
